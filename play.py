@@ -5,8 +5,8 @@ from blackjack.utils import create_new_shuffled_deck, deal
 
 # TODO: Nice printing whitespace (so it's easily readable)
 
-# SETUP
-print("\n$$$ Welcome to the blackjack table! $$$\n")
+# ----- SETUP ----- #
+print("\n$$$ WELCOME TO THE BLACKJACK TABLE! $$$\n")
 
 # TODO: Add back in user input lines below and vet the input
 # player_name = input("Please enter a player name: ")
@@ -16,49 +16,106 @@ print("\n$$$ Welcome to the blackjack table! $$$\n")
 player = Player('Ellis', 100)
 dealer = Player('Dealer', 0)
 
-# TURN: Start coding one turn, and then can put in a loop or something
+# ----- TURN ----- #
+# Start coding one turn, and then can put in a loop or something.
 
-# Create a brand new shuffled deck of cards
-deck = create_new_shuffled_deck()
+# TODO: Turn this into a GameManager class or something?
 
-# TODO: Add back in the wagering step and vet the input
-# Ask the player to place a wager on the hand
-# wager = float(input(f"\nPlese enter a wager for the hand (bankroll: ${player.bankroll}): $"))
+standing_wager = 0
 
-wager = 10
 
-# Subtract the wager from the player's bankroll
-player.subtract_bankroll(wager)
+def is_affirmative_response(response):
+    """Check whether user's keyboard response is a 'yes'."""
+    if response.lower() in ('y', 'yes'):
+        return True
+    else:
+        return False
 
-# Deal cards to the player and the dealer
-deal(deck, player, dealer)
 
-# Display the dealer's first card to the player
-dealer_up_card = dealer.hands[0].cards[0]
-print(f"Dealer up card: {dealer_up_card}")
+def place_wager():
+    """Ask whether the player wants to change their standing bet"""
+    global standing_wager
+    change_wager = input(f"Change wager (Wager: ${standing_wager}, Bankroll: ${player.bankroll})? (y/n): ")
+    if is_affirmative_response(change_wager):
+        player.add_bankroll(standing_wager)  # Add the standing_wager back to the player's bankroll
+        new_standing_wager = float(input(f"Enter new wager amount (Bankroll: ${player.bankroll}): $"))
+        # TODO: Vet wager
+        player.subtract_bankroll(new_standing_wager)
+        standing_wager = new_standing_wager
 
-# Diplay both of the player's cards
-print(f"Your hand(s): {player.hands}")
 
-# Check whether the dealer is showing an ace. If so, offer insurance.
-# TODO: Offer insurance to player and handle that logic.
-if dealer_up_card.name == 'Ace':
-    pass
+def play_turn():
 
-# Check whether the dealer has blackjack
-if dealer.hands[0].is_blackjack():
-    print("Dealer has blackjack!")
+    print("\nNew turn.")
+    global standing_wager
 
-# Check whether the player has blackjack
-if player.hands[0].is_blackjack():
-    print("Player has blackjack!")
+    # Create a brand new shuffled deck of cards
+    deck = create_new_shuffled_deck()
 
-player_low_total, player_high_total = player.hands[0].possible_totals()
-print(f"Player totals: {player_low_total}, {player_high_total}")
+    # Allow the player to place a wager on the hand
+    place_wager()
 
-# Check whether the player's hand is splittable, and ask if so.
-# TODO: Figure out splitting logic.
-if player.hands[0].is_splittable():
-    print("Player's hand is splittable.")
+    # Deal cards to the player and the dealer
+    deal(deck, [player, dealer])
 
-# Figure out how to hit/split/double/stand
+    # Assign the player's wager to the hand
+    player.hands[0].wager = standing_wager
+
+    # Display the dealer's first card to the player
+    dealer_up_card = dealer.hands[0].cards[0]
+    print(f"Dealer up card: {dealer_up_card} -- ({dealer_up_card.value if dealer_up_card.name != 'Ace' else '1 or 11'})")
+
+    # Diplay both of the player's cards
+    print("Player's hand(s):")
+    player.print_hands()
+
+    # Check whether the player or dealer has blackjack. Don't display whether dealer has it yet!
+    player_has_black_jack = player.hands[0].is_blackjack()
+    dealer_has_black_jack = dealer.hands[0].is_blackjack()
+    if player_has_black_jack:
+        print("Player has blackjack!")
+
+    # Check whether the dealer is showing an ace. If so, offer insurance.
+    #   1) If the player has blackjack, they can choose to take even money (pays 1:1)
+    #   2) Otherwise, the player can place a separate insurance bet that the dealer has blackjack (pays 2:1).
+    #      Insurance is typically half the player's original bet, so let's just enforce that.
+    if dealer_up_card.name == 'Ace':
+        
+        if player_has_black_jack:
+            take_even_money = input("Take even money? (y/n): ")
+            if take_even_money.lower() in ('y', 'yes'):
+                player.add_bankroll(standing_wager*2)  # Pay even money, turn is over.
+                return
+            else:
+                if dealer_has_black_jack:
+                    player.add_bankroll(standing_wager)  # Push
+                    return
+        else:
+            insurance = input("Insurance? (y/n): ")
+            if insurance.lower() in ('y', 'yes'):
+                player.subtract_bankroll(standing_wager/2)
+                if dealer_has_black_jack:
+                    player.add_bankroll(standing_wager/2*3)  # Pays 2:1
+                    return
+
+    if dealer_has_black_jack:
+        print("Dealer has blackjack!")
+
+    # Check whether the player's hand is splittable, and ask if so.
+    # TODO: Figure out splitting logic.
+    # if player.hands[0].is_splittable():
+    #     print("Player's hand is splittable.")
+
+    # Figure out how to hit/split/double/stand
+    
+    # Reset the hands
+    player.reset_hands()
+    dealer.reset_hands()
+    print()
+
+# Play the first turn without asking the player.
+play_turn()
+
+# Then keep playing turns until the player wants to quit.
+while is_affirmative_response(input('Play another turn? (y/n) ')):
+    play_turn()

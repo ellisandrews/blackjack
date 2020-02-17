@@ -31,8 +31,9 @@ class Card:
 
 
 class Hand:
-    def __init__(self, *args):
-        self.cards = [card for card in args]  # List of Card objects
+    def __init__(self, cards, wager=0):
+        self.cards = cards  # List of Card objects
+        self.wager = wager  # Amount wagered on the hand
 
     def __str__(self):
         return ' | '.join(str(card) for card in self.cards)
@@ -41,6 +42,7 @@ class Hand:
         return self.__str__()
 
     def possible_totals(self):
+        """Sum the cards in the hand. Return 2 totals, due to the dual value of Aces."""
         # Get the number of aces in the hand
         num_aces = self.get_num_aces_in_hand()
         

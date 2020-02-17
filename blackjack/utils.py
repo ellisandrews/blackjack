@@ -13,7 +13,9 @@ def create_new_shuffled_deck():
     return deck
 
 
-def deal(deck, *args):
-    """Deal 2 cards from the deck to each player passed in."""
-    for player in args:
-        player.hands.append(Hand(deck.pop(), deck.pop()))
+def deal(deck, players):
+    """Deal 2 cards from the deck to each player."""
+    print("Dealing new hand...")
+    for player in players:
+        cards = [deck.pop(), deck.pop()]
+        player.hands.append(Hand(cards))

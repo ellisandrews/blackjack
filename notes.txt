@@ -11,13 +11,13 @@ I. Setup:
 II. Each Turn:
     1) A new deck of 52 cards is created and shuffled.
 
-    2) The player wagers money from his bank on the hand.
-        - This is subtracted from his bankroll. Needs to be stored somewhere.
+    2) The player wagers money from his bank on the initial hand.
+        - This is subtracted from his bankroll.
 
     3) A hand (of random 2 cards from the deck) is dealt to the player and the dealer.
         - The player can see both of his cards.
         - The player can only see one of the dealer's cards.
-        - The player's wager is assigned to the hand?
+        - The player's wager is assigned to the hand.
 
     4) Check for blackjacks, both dealer and player. 
         - If dealer has blackjack and player doesn't, player loses.

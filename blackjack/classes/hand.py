@@ -1,45 +1,26 @@
-SUITS = ['Spades', 'Hearts', 'Clubs', 'Diamonds']
+from typing import Optional, Union
 
-CARDS = {
-    'Ace': [1, 11],
-    '2': 2,
-    '3': 3,
-    '4': 4,
-    '5': 5,
-    '6': 6,
-    '7': 7,
-    '8': 8,
-    '9': 9,
-    '10': 10,
-    'Jack': 10,
-    'Queen': 10,
-    'King': 10
-}
-
-
-class Card:
-    def __init__(self, name, suit):
-        self.name = name
-        self.suit = suit
-        self.value = CARDS[name]
-
-    def __str__(self):
-        return f"{self.name} of {self.suit}"
-
-    def __repr__(self):
-        return self.__str__()
+from blackjack.classes.player import Player
 
 
 class Hand:
-    def __init__(self, cards, wager=0):
-        self.cards = cards  # List of Card objects
-        self.wager = wager  # Amount wagered on the hand
+
+    all_ = []
+
+    def __init__(self, player: Player, wager: Optional[Union[int, float]] = 0):
+        self.player = player
+        self.wager = wager
+
+        Hand.all_.append(self)
 
     def __str__(self):
-        return ' | '.join(str(card) for card in self.cards)
+        return ' | '.join(str(card) for card in self.cards())
 
     def __repr__(self):
         return self.__str__()
+
+    def cards(self):
+        pass
 
     def possible_totals(self):
         """Sum the cards in the hand. Return 2 totals, due to the dual value of Aces."""

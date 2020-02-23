@@ -1,13 +1,19 @@
+from typing import Union
+
 
 class Player:
 
-    def __init__(self, name, bankroll):
+    all_ = []
+
+    def __init__(self, name: str, bankroll: Union[int, float]):
         self.name = name
         self.bankroll = bankroll
-        self.hands = []
 
     def __str__(self):
         return f"Player: {self.name} | Bankroll: ${self.bankroll}"
+
+    def hands(self):
+        pass
 
     def reset_hands(self):
         self.hands = []

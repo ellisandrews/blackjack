@@ -48,7 +48,7 @@ def play_turn():
 
     print("\nNew turn.")
     global standing_wager
-
+    
     # Create a brand new shuffled deck of cards
     deck = create_new_shuffled_deck()
 
@@ -84,12 +84,11 @@ def play_turn():
         if player_has_black_jack:
             take_even_money = input("Take even money? (y/n): ")
             if take_even_money.lower() in ('y', 'yes'):
-                player.add_bankroll(standing_wager*2)  # Pay even money, turn is over.
+                player.add_bankroll(standing_wager)  # Pay even money, turn is over.
                 return
             else:
                 if dealer_has_black_jack:
-                    player.add_bankroll(standing_wager)  # Push
-                    return
+                    return  # Push
         else:
             insurance = input("Insurance? (y/n): ")
             if insurance.lower() in ('y', 'yes'):
@@ -100,6 +99,8 @@ def play_turn():
 
     if dealer_has_black_jack:
         print("Dealer has blackjack!")
+        player.subtract_bankroll(standing_wager)
+        return
 
     # Check whether the player's hand is splittable, and ask if so.
     # TODO: Figure out splitting logic.

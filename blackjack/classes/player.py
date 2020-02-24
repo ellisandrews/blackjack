@@ -1,11 +1,11 @@
-from typing import Union
+from blackjack.classes.hand import Hand
 
 
 class Player:
 
     all_ = []
 
-    def __init__(self, name: str, bankroll: Union[int, float]):
+    def __init__(self, name, bankroll):
         self.name = name
         self.bankroll = bankroll
 
@@ -13,10 +13,7 @@ class Player:
         return f"Player: {self.name} | Bankroll: ${self.bankroll}"
 
     def hands(self):
-        pass
-
-    def reset_hands(self):
-        self.hands = []
+        return [hand for hand in Hand.all_ if hand.player == self]
 
     def add_bankroll(self, amount):
         self.bankroll += amount
@@ -27,7 +24,7 @@ class Player:
             self.bankroll = 0
 
     def print_hands(self):
-        for i, hand in enumerate(self.hands):
+        for i, hand in enumerate(self.hands()):
             # Get possible hand total(s) to display
             low_total, high_total = hand.possible_totals()
 

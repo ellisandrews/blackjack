@@ -1,3 +1,8 @@
+import random
+
+from blackjack.classes.card import Card
+
+
 class Deck:
 
     all_ = []
@@ -14,3 +19,11 @@ class Deck:
 
     def __repr__(self):
         return self.__str__()
+
+    def cards(self):
+        return [card for card in Card.all_ if card.deck == self]
+
+    def shuffle_cards(self):
+        cards = self.cards()
+        random.shuffle(cards)
+        return cards

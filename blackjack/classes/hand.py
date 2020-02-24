@@ -1,13 +1,11 @@
-from typing import Optional, Union
-
-from blackjack.classes.player import Player
+from blackjack.classes.card import Card
 
 
 class Hand:
 
     all_ = []
 
-    def __init__(self, player: Player, wager: Optional[Union[int, float]] = 0):
+    def __init__(self, player, wager=0):
         self.player = player
         self.wager = wager
 
@@ -20,7 +18,7 @@ class Hand:
         return self.__str__()
 
     def cards(self):
-        pass
+        return [card for card in Card.all_ if card.hand == self]
 
     def possible_totals(self):
         """Sum the cards in the hand. Return 2 totals, due to the dual value of Aces."""
@@ -28,7 +26,7 @@ class Hand:
         num_aces = self.get_num_aces_in_hand()
         
         # Get the total for all non-ace cards first, as this is constant
-        non_ace_total = sum(card.value for card in self.cards if card.name != 'Ace')
+        non_ace_total = sum(card.value for card in self.cards() if card.name != 'Ace')
 
         # If there are no aces in the hand, there is only one possible total. Return it.
         if num_aces == 0:
@@ -53,7 +51,7 @@ class Hand:
     def get_num_aces_in_hand(self):
         """Get the number of Aces in the hand."""
         num_aces = 0
-        for card in self.cards:
+        for card in self.cards():
             if card.name == 'Ace':
                 num_aces += 1
         return num_aces
@@ -61,14 +59,15 @@ class Hand:
     def is_blackjack(self):
         """Check whether the hand is blackjack."""
         _, high_total = self.possible_totals()
-        if high_total == 21 and len(self.cards) == 2:
+        if high_total == 21 and len(self.cards()) == 2:
             return True
         else:
             return False
 
     def is_splittable(self):
         """Check whether the hand is splittable"""
-        if len(self.cards) == 2 and self.cards[0].name == self.cards[1].name:
+        cards = self.cards()
+        if len(cards) == 2 and cards[0].name == cards[1].name:
             return True
         else:
             return False

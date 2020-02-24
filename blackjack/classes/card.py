@@ -1,17 +1,11 @@
-from typing import List, Optional, Union
-
-from blackjack.classes.deck import Deck
-from blackjack.classes.hand import Hand
-
-
 class Card:
 
     all_ = []
 
-    def __init__(self, deck: Deck, name: str, suit: str, value: Union[int, List[int]], hand: Optional[Hand] = None):
+    def __init__(self, deck, suit, name, value, hand=None):
         self.deck = deck
-        self.name = name
         self.suit = suit
+        self.name = name
         self.value = value
         self.hand = hand
         
@@ -22,3 +16,7 @@ class Card:
 
     def __repr__(self):
         return self.__str__()
+
+    @classmethod
+    def clear_all(cls):
+        cls.all_ = []

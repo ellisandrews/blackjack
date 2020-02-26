@@ -9,6 +9,8 @@ class Player:
         self.name = name
         self.table = table
 
+        Player.all_.append(self)
+
     def __str__(self):
         return f"Player: {self.name}"
     

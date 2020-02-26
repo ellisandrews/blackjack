@@ -8,7 +8,8 @@ class Deck:
     all_ = []
     counter = 1
 
-    def __init__(self):
+    def __init__(self, shoe=None):
+        self.shoe = shoe
         self.number = Deck.counter
         
         Deck.counter += 1
@@ -23,7 +24,12 @@ class Deck:
     def cards(self):
         return [card for card in Card.all_ if card.deck == self]
 
-    def shuffle_cards(self):
+    def populate(self):
+        for suit in Card.SUITS:
+            for name, value in Card.RANKS:
+                Card(suit, name, value, deck=self)
+
+    def shuffle(self):
         cards = self.cards()
         random.shuffle(cards)
         return cards

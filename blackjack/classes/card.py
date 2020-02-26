@@ -2,11 +2,28 @@ class Card:
 
     all_ = []
 
-    def __init__(self, deck, suit, name, value, hand=None):
-        self.deck = deck
+    SUITS = ['Spades', 'Hearts', 'Clubs', 'Diamonds']
+    RANKS = [
+        ('Ace', [1, 11]),
+        ('2', 2),
+        ('3', 3),
+        ('4', 4),
+        ('5', 5),
+        ('6', 6),
+        ('7', 7),
+        ('8', 8),
+        ('9', 9),
+        ('10', 10),
+        ('Jack', 10),
+        ('Queen', 10),
+        ('King', 10)
+    ]
+
+    def __init__(self, suit, name, value, deck=None, hand=None):
         self.suit = suit
         self.name = name
         self.value = value
+        self.deck = deck
         self.hand = hand
         
         Card.all_.append(self)

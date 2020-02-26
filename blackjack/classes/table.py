@@ -1,3 +1,6 @@
+from blackjack.classes.player import Player
+
+
 class Table:
 
     all_ = []
@@ -10,7 +13,4 @@ class Table:
         Table.all_.append(self)
 
     def players(self):
-        pass
-
-    def shoe(self):
-        pass
+        return [player for player in Player.all_ if player.table == self]

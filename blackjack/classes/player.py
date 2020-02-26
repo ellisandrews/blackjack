@@ -1,6 +1,7 @@
 from blackjack.classes.hand import Hand
 
 
+# TODO: This could probably be an abstract base class
 class Player:
 
     all_ = []
@@ -32,7 +33,7 @@ class Player:
 class Gambler(Player):
     
     def __init__(self, name, bankroll=0, table=None, standing_wager=0):
-        super().__init__(self, name, table)
+        super().__init__(name, table)
         self.bankroll = bankroll
         self.standing_wager = standing_wager
 
@@ -51,4 +52,4 @@ class Gambler(Player):
 class Dealer(Player):
     
     def __init__(self, name='Dealer', table=None):
-        super().__init__(self, name, table)
+        super().__init__(name, table)

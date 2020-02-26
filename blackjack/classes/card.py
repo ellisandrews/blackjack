@@ -29,6 +29,7 @@ class Card:
         Card.all_.append(self)
 
     def __str__(self):
+        # TODO: Use emojis for the suit!
         return f"{self.name} of {self.suit}"
 
     def __repr__(self):

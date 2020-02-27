@@ -1,5 +1,5 @@
 from blackjack.classes.player import Gambler, Player
-from blackjack.utils import get_user_input, parse_float_response, parse_yes_no_response
+from blackjack.utils import get_user_input, float_response, yes_no_response
 
 
 class Table:
@@ -26,7 +26,7 @@ class Table:
             print()
 
             # Ask if they want to cash out or change wager
-            response = get_user_input(f"{gambler.name}, change your wager or cash out (Bankroll: ${gambler.bankroll}; current wager: ${gambler.wager})? (y/n) => ", parse_yes_no_response)
+            response = get_user_input(f"{gambler.name}, change your wager or cash out (Bankroll: ${gambler.bankroll}; current wager: ${gambler.wager})? (y/n) => ", yes_no_response)
             
             # If they want to make a change, make it
             if response == 'yes':
@@ -35,7 +35,7 @@ class Table:
                 gambler.move_wager_to_bankroll()
 
                 # Ask them to enter a new wager
-                new_wager = get_user_input(f"Enter a new wager (Bankroll: ${gambler.bankroll}; enter $0 to cash out): $", parse_float_response)
+                new_wager = get_user_input(f"Enter a new wager (Bankroll: ${gambler.bankroll}; enter $0 to cash out): $", float_response)
                 
                 # TODO: Validate that they have sufficient bankroll to place the wager!!
 

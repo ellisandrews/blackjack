@@ -4,7 +4,7 @@ from blackjack.classes.deck import Deck
 from blackjack.classes.player import Dealer, Gambler
 from blackjack.classes.shoe import Shoe
 from blackjack.classes.table import Table
-from blackjack.utils import get_user_input, parse_float_response, parse_int_response
+from blackjack.utils import get_user_input, float_response, int_response
 
 
 def setup_table(num_decks):
@@ -40,7 +40,7 @@ def get_player_information(num_players):
         
         # TODO: Should they always start with a default amount? Or allow to enter here?
         # Get the player's bankroll
-        bankroll = get_user_input("  Please enter a bankroll amount => $", parse_float_response)
+        bankroll = get_user_input("  Please enter a bankroll amount => $", float_response)
 
         player_information.append({'name': name, 'bankroll': bankroll})
         counter += 1
@@ -67,8 +67,8 @@ if __name__ == '__main__':
     print()
 
     # Ask the user for the number of players and decks
-    number_of_players = get_user_input("Please enter the number of players (integer) => ", parse_int_response)
-    number_of_decks = get_user_input("Please enter the number of decks to use (integer) => ", parse_int_response)
+    number_of_players = get_user_input("Please enter the number of players (integer) => ", int_response)
+    number_of_decks = get_user_input("Please enter the number of decks to use (integer) => ", int_response)
     
     print()
     print("Setting up the table...")

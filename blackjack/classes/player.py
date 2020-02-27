@@ -1,7 +1,12 @@
 from blackjack.classes.hand import Hand
 
 
-# TODO: This could probably be an abstract base class
+# TODO: Make an exceptions file for the project
+class InsufficientBankrollError(Exception):
+    pass
+
+
+# TODO: This could probably be an abstract base class?
 class Player:
 
     all_ = []
@@ -32,10 +37,10 @@ class Player:
 
 class Gambler(Player):
     
-    def __init__(self, name, bankroll=0, table=None, standing_wager=0):
+    def __init__(self, name, bankroll=0, table=None, wager=0):
         super().__init__(name, table)
         self.bankroll = bankroll
-        self.standing_wager = standing_wager
+        self.wager = wager
 
     def __str__(self):
         return super().__str__(self) + f" | Bankroll: ${self.bankroll}"
@@ -44,9 +49,21 @@ class Gambler(Player):
         self.bankroll += amount
 
     def subtract_bankroll(self, amount):
+        if self.bankroll < amount:
+            raise InsufficientBankrollError
         self.bankroll -= amount
-        if self.bankroll < 0:  # The player cannot have a negative bankroll
-            self.bankroll = 0
+
+    def move_wager_to_bankroll(self):
+        self.add_bankroll(self.wager)
+        self.wager = 0
+
+    def set_new_wager(self, wager):
+        # Make sure they have enough in their bankroll
+        try:
+            self.subtract_bankroll(wager)
+            self.wager = wager
+        except InsufficientBankrollError:
+            raise
 
 
 class Dealer(Player):

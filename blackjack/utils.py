@@ -1,21 +1,52 @@
-import random
 
-from blackjack.classes.cards import Card, CARDS, Hand, SUITS
-
-
-def create_new_shuffled_deck():
-    """Create a new shuffled deck of all 52 cards."""
-    deck = []
-    for suit in SUITS:
-        for card_name in CARDS.keys():
-            deck.append(Card(card_name, suit))
-    random.shuffle(deck)
-    return deck
+INVALID_RESPONSE = 'invalid'
 
 
-def deal(deck, players):
-    """Deal 2 cards from the deck to each player."""
-    print("Dealing new hand...")
-    for player in players:
-        cards = [deck.pop(), deck.pop()]
-        player.hands.append(Hand(cards))
+# Response parsing/validating/casting functions
+
+def yes_no_response(response):
+    """Check whether user's keyboard input is a valid yes or no."""
+    response = response.lower()
+    if response in ('y', 'yes'):
+        return 'yes'
+    elif response in ('n', 'no'):
+        return 'no'
+    else:
+        return INVALID_RESPONSE
+
+
+def float_response(response):
+    """Check whether a user's keyboard input is a valid float, and cast it as such."""
+    try:
+        return float(response)
+    except ValueError:
+        return INVALID_RESPONSE
+
+
+def int_response(response):
+    """Check whether a user's keyboard input is a valid integer, and cast it as such."""
+    try:
+        return int(response)
+    except ValueError:
+        return INVALID_RESPONSE
+
+
+# Customizable user input function
+
+def get_user_input(prompt, parsing_func, invalid_msg='Invalid response. Please try again.', retries=3):
+    """Get raw input from the user, and ensure it's valid."""
+
+    attempts = 0
+    response = INVALID_RESPONSE
+    
+    while response == INVALID_RESPONSE and attempts < retries:
+        if attempts > 0:
+            print(invalid_msg)
+        response = parsing_func(input(prompt))
+        attempts += 1
+
+    if attempts == retries:
+        print('Maximum retries hit. Exiting...')
+        exit(1)
+
+    return response

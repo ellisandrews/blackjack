@@ -1,4 +1,5 @@
 from blackjack.classes.player import Gambler, Player
+from blackjack.exc import InsufficientBankrollError
 from blackjack.utils import get_user_input, float_response, yes_no_response
 
 
@@ -26,25 +27,21 @@ class Table:
             print()
 
             # Ask if they want to cash out or change wager
-            response = get_user_input(f"{gambler.name}, change your wager or cash out (Bankroll: ${gambler.bankroll}; current wager: ${gambler.wager})? (y/n) => ", yes_no_response)
+            response = get_user_input(
+                f"{gambler.name}, change your wager or cash out (Bankroll: ${gambler.bankroll}; current wager: ${gambler.wager})? (y/n) => ", 
+                yes_no_response
+            )
             
             # If they want to make a change, make it
             if response == 'yes':
 
-                # Move their current standing wager to their bankroll
-                gambler.move_wager_to_bankroll()
-
-                # Ask them to enter a new wager
-                new_wager = get_user_input(f"Enter a new wager (Bankroll: ${gambler.bankroll}; enter $0 to cash out): $", float_response)
+                # Ask them to enter a new wager, validate the input, and set the new wager
+                gambler.set_new_wager_from_input()
                 
-                # TODO: Validate that they have sufficient bankroll to place the wager!!
-
-                # If they entered a wager of $0, cash them out of the game. Otherwise update their wager
-                if new_wager == 0:
-                    # TODO!!!!!!!!!!
+                # If they've entered a wager of $0, that means they've cashed out.
+                if gambler.wager == 0:
+                    # TODO: Cash them out, remove them from Table?
                     pass
-                else:
-                    gambler.set_new_wager(new_wager)
 
     def play_round(self):
 
@@ -52,5 +49,3 @@ class Table:
         self.check_gambler_wagers()
         
         # 2) Deal Cards from the Shoe to each Player (including the Dealer)
-
-

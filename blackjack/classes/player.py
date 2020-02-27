@@ -1,12 +1,9 @@
 from blackjack.classes.hand import Hand
+from blackjack.exc import InsufficientBankrollError
+from blackjack.utils import float_response, get_user_input, max_retries_exit
 
 
-# TODO: Make an exceptions file for the project
-class InsufficientBankrollError(Exception):
-    pass
-
-
-# TODO: This could probably be an abstract base class?
+# TODO: This could maybe be an abstract base class?
 class Player:
 
     all_ = []
@@ -58,12 +55,36 @@ class Gambler(Player):
         self.wager = 0
 
     def set_new_wager(self, wager):
-        # Make sure they have enough in their bankroll
+        # Make sure bankroll is large enough to place the wager
         try:
             self.subtract_bankroll(wager)
             self.wager = wager
         except InsufficientBankrollError:
             raise
+
+    def set_new_wager_from_input(self, retries=3):
+    
+        # Move their current wager to their bankroll
+        self.move_wager_to_bankroll()
+
+        # Ask them for a new wager and set it, with some validation
+        attempts = 0
+        success = False        
+        while not success and attempts < retries:
+            # This validates that they've entered a float
+            new_wager = get_user_input(f"Enter a new wager (Bankroll: ${self.bankroll}; enter $0 to cash out): $", float_response)
+            
+            # This validates that they've entered a wager <= their bankroll
+            try:
+                self.set_new_wager(new_wager)
+                success = True
+            except InsufficientBankrollError:
+                print('Insufficient bankroll to place that wager. Please try again.')
+                attempts += 1
+
+        # If they've unsuccessfully tried to enter input the maximum number of times, exit the program
+        if attempts == retries and not success:
+            max_retries_exit()
 
 
 class Dealer(Player):

@@ -33,7 +33,7 @@ def int_response(response):
 
 # Customizable user input function
 
-def get_user_input(prompt, parsing_func, invalid_msg='Invalid response. Please try again.', retries=3):
+def get_user_input(prompt, parsing_func, retries=3):
     """Get raw input from the user, and ensure it's valid."""
 
     attempts = 0
@@ -41,12 +41,20 @@ def get_user_input(prompt, parsing_func, invalid_msg='Invalid response. Please t
     
     while response == INVALID_RESPONSE and attempts < retries:
         if attempts > 0:
-            print(invalid_msg)
+            print('Invalid response. Please try again.')
         response = parsing_func(input(prompt))
         attempts += 1
 
-    if attempts == retries:
-        print('Maximum retries hit. Exiting...')
-        exit(1)
+    # If they've unsuccessfullly tried to enter input the maximum number of times, exit the program
+    if attempts == retries and response == INVALID_RESPONSE:
+        max_retries_exit()
 
     return response
+
+
+# Function for quiting the program due to user input retries limit
+
+def max_retries_exit():
+    """Exit the program due to hitting the maximum number of retries for user input."""
+    print('Maximum retries reached. Exiting...')
+    exit(1)

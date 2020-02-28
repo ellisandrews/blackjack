@@ -3,7 +3,6 @@ from blackjack.exc import InsufficientBankrollError
 from blackjack.utils import float_response, get_user_input, max_retries_exit
 
 
-# TODO: This could maybe be an abstract base class?
 class Player:
 
     all_ = []
@@ -16,20 +15,14 @@ class Player:
 
     def __str__(self):
         return f"Player: {self.name}"
-    
+
     def hands(self):
         return [hand for hand in Hand.all_ if hand.player == self]
 
-    def print_hands(self):
-        for i, hand in enumerate(self.hands()):
-            # Get possible hand total(s) to display
-            low_total, high_total = hand.possible_totals()
-
-            # There will always be a low total. If there is a high total, display that too.
-            if high_total:
-                print(f"Hand {i+1} (${hand.wager}): {hand} -- ({low_total} or {high_total})")
-            else:
-                print(f"Hand {i+1} (${hand.wager}): {hand} -- ({low_total})")
+    def discard_hands(self):
+        # TODO: Delete the actual object entirely so we won't have Hand.all_ growing forever?
+        for hand in self.hands():
+            hand.player = None
 
 
 class Gambler(Player):
@@ -40,7 +33,7 @@ class Gambler(Player):
         self.wager = wager
 
     def __str__(self):
-        return super().__str__(self) + f" | Bankroll: ${self.bankroll}"
+        return super().__str__() + f" | Bankroll: ${self.bankroll}"
 
     def add_bankroll(self, amount):
         self.bankroll += amount
@@ -86,8 +79,41 @@ class Gambler(Player):
         if attempts == retries and not success:
             max_retries_exit()
 
+    def print_hands(self):
+
+        for hand in self.hands():
+            # Get possible hand total(s) to display
+            low_total, high_total = hand.possible_totals()
+
+            # There will always be a low total. If there is a high total, display that too.
+            if high_total:
+                print(f"Hand (${hand.wager}): {hand} -- ({low_total} or {high_total})")
+            else:
+                print(f"Hand (${hand.wager}): {hand} -- ({low_total})")
+
 
 class Dealer(Player):
-    
+
     def __init__(self, name='Dealer', table=None):
         super().__init__(name, table)
+
+    def hand(self):
+        # The dealer will only ever have a single hand
+        return self.hands()[0]
+
+    def print_up_card(self):
+        up_card = self.hand().cards()[0]
+        print(f"Dealer's Up Card: {up_card} -- ({up_card.value})")
+
+    def print_hand(self):
+
+        hand = self.hand()
+
+        # Get possible hand total(s) to display
+        low_total, high_total = hand.possible_totals()
+
+        # There will always be a low total. If there is a high total, display that too.
+        if high_total:
+            print(f"Hand: {hand} -- ({low_total} or {high_total})")
+        else:
+            print(f"Hand: {hand} -- ({low_total})")

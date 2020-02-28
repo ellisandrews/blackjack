@@ -9,21 +9,21 @@ from blackjack.utils import get_user_input, float_response, int_response
 
 def setup_table(num_decks):
 
-    # Create a Table
-    game_table = Table()
+    # Create a Table. It will autotmatically create a Shoe for itself.
+    table = Table()
 
-    # Create a Shoe associated with the Table
-    shoe = Shoe(table=game_table)
-
-    # Create `num_decks` decks associated with the Shoe
+    # Create `num_decks` decks associated with the Table's Shoe
     for _ in range(num_decks):
-        deck = Deck(shoe=shoe)  # Create the deck
-        deck.populate()         # Populate the deck with cards
+        deck = Deck(shoe=table.shoe)  # Create the Deck, associate with the Shoe
+        deck.populate()               # Populate the Deck with cards
 
     # Setup the Dealer
-    Dealer(table=game_table)
+    Dealer(table=table)
 
-    return game_table
+    # Pre-pop the shoe with shuffled cards from the created decks
+    table.shoe.reset_card_pile()
+
+    return table
 
 
 def get_player_information(num_players):
@@ -80,13 +80,14 @@ if __name__ == '__main__':
 
     player_info = get_player_information(number_of_players)
 
-    print()
     print("Setting up players...")
     setup_players(player_info, table)
 
     print()
-    print('---------- Setup Complete!  ----------')
-    print()
+    print('---------- Setup Complete! ----------')
 
-    table.play_round()
-    table.play_round()
+    while table.gamblers():
+        table.play_round()
+    
+    print()
+    print('------------- Game Over -------------')

@@ -7,10 +7,10 @@ class Player:
 
     all_ = []
 
-    def __init__(self, name, table=None):
+    # NOTE: If ever refactoring to allow many Players at a Table, this class should belong to a Table
+    #       (i.e. many to one relationship Player to Table) and thus define a table attribute here.
+    def __init__(self, name):
         self.name = name
-        self.table = table
-
         Player.all_.append(self)
 
     def __str__(self):
@@ -27,10 +27,13 @@ class Player:
 
 class Gambler(Player):
     
-    def __init__(self, name, bankroll=0, table=None, wager=0):
-        super().__init__(name, table)
+    def __init__(self, name, bankroll=0, wager=0):
+        super().__init__(name)
         self.bankroll = bankroll
         self.wager = wager
+
+        # Player is finished if they have set their wager to $0 or if they are out of money
+        self.is_finished = lambda: self.wager == 0 or self.bankroll + self.wager == 0
 
     def __str__(self):
         return super().__str__() + f" | Bankroll: ${self.bankroll}"
@@ -65,7 +68,7 @@ class Gambler(Player):
         success = False        
         while not success and attempts < retries:
             # This validates that they've entered a float
-            new_wager = get_user_input(f"Enter a new wager (Bankroll: ${self.bankroll}; enter $0 to cash out): $", float_response)
+            new_wager = get_user_input(f"Please enter a wager (Bankroll: ${self.bankroll}; enter $0 to cash out): $", float_response)
             
             # This validates that they've entered a wager <= their bankroll
             try:
@@ -91,11 +94,18 @@ class Gambler(Player):
             else:
                 print(f"Hand (${hand.wager}): {hand} -- ({low_total})")
 
+    def play_turn(self):
+        
+        # Print out the gambler's hand(s)
+        self.print_hands()
+
+        response = input("\nWhat would you like to do?\n[ hit (h), stand (s), double (d), split (x) ] => ")
+
 
 class Dealer(Player):
 
-    def __init__(self, name='Dealer', table=None):
-        super().__init__(name, table)
+    def __init__(self, name='Dealer'):
+        super().__init__(name)
 
     def hand(self):
         # The dealer will only ever have a single hand

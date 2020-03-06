@@ -38,22 +38,40 @@ class Gambler(Player):
     def __str__(self):
         return super().__str__() + f" | Bankroll: ${self.bankroll}"
 
-    def add_bankroll(self, amount):
+    def first_hand(self):
+        # Helper method for action that happens on the initial hand dealt to the gambler
+        return self.hands()[0]
+
+    def payout(self, amount):
+        self._add_bankroll(amount)
+        print(f"Payout of ${amount} added to {self.name}'s bankroll.")
+
+    def _add_bankroll(self, amount):
         self.bankroll += amount
 
-    def subtract_bankroll(self, amount):
+    def _subtract_bankroll(self, amount):
         if self.bankroll < amount:
             raise InsufficientBankrollError
         self.bankroll -= amount
 
+    def buy_insurance_for_first_hand(self):
+        first_hand = self.first_hand() 
+        insurance_amount = first_hand.wager / 2  # Insurance is 1/2 the amount wagered on the hand
+        try:      
+            self._subtract_bankroll(insurance_amount)  
+            first_hand.insurance = insurance_amount
+            print(f"${insurance_amount} insurance wager placed.")
+        except InsufficientBankrollError:
+            raise
+
     def move_wager_to_bankroll(self):
-        self.add_bankroll(self.wager)
+        self._add_bankroll(self.wager)
         self.wager = 0
 
     def set_new_wager(self, wager):
         # Make sure bankroll is large enough to place the wager
         try:
-            self.subtract_bankroll(wager)
+            self._subtract_bankroll(wager)
             self.wager = wager
         except InsufficientBankrollError:
             raise
@@ -111,9 +129,14 @@ class Dealer(Player):
         # The dealer will only ever have a single hand
         return self.hands()[0]
 
+    def up_card(self):
+        return self.hand().cards()[0]
+
     def print_up_card(self):
-        up_card = self.hand().cards()[0]
-        print(f"Dealer's Up Card: {up_card} -- ({up_card.value})")
+        print(f"Dealer's Up Card: {self.up_card()} -- ({self.up_card().value})")
+
+    def up_card_is_ace(self):
+        return self.up_card().name == 'Ace'
 
     def print_hand(self):
 

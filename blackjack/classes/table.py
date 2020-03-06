@@ -16,6 +16,7 @@ class Table:
         self.shoe = shoe or Shoe()
         self.number = Table.counter
 
+        # Derived attribute for ease of gameplay
         self.players = [self.gambler, self.dealer]
 
         Table.counter += 1
@@ -32,9 +33,6 @@ class Table:
         # If they want to make a change, make it
         if response == 'yes':
             self.gambler.set_new_wager_from_input()
-            
-        # Return whether or not they cashed out
-        return self.gambler.is_finished()
 
     def deal(self):
 
@@ -60,24 +58,82 @@ class Table:
 
         print('\n--- New Turn ---')
 
-        # 1) Ask the Gambler if they would like to change their wager. If they cash out, don't play the turn.
-        cashed_out = self.check_gambler_wager()
-        if cashed_out:
+        # Ask the Gambler if they would like to change their wager (or cash out).
+        self.check_gambler_wager()
+        
+        # If they cash out, don't play the turn.
+        # TODO: Print a message?
+        if self.gambler.is_finished():
             return
 
-        # 2) Deal 2 Cards from the Shoe to each Player (Gambler and Dealer)
+        # Deal 2 Cards from the Shoe to each Player (the Gambler and Dealer).
         self.deal()
 
-        # 3) Display the Dealer's up card
+        # Display the Dealer's up card.
         self.dealer.print_up_card()
 
-        # 4) Play the Gambler's turn
+        # Check for blackjacks
+        dealer_has_black_jack = self.dealer.hand().is_blackjack()
+        gambler_has_black_jack = self.gambler.first_hand().is_blackjack()
+
+        # Print if the gambler has blackjack. Don't reveal whether the dealer does yet.
+        if gambler_has_black_jack:
+            print(f"{self.gambler.name} has blackjack!")
+
+        # If the Dealer is showing an ace, ask the Gambler if they want insurance.
+        if self.dealer.up_card_is_ace():
+            
+            base_prompt = "Dealer up card is an Ace."
+
+            # If the gambler has blackjack, give them the option to take even money.
+            if gambler_has_black_jack:
+                take_even_money = get_user_input(f"{base_prompt} Take even money? (y/n) => ", yes_no_response)
+                # If they took even money, payout 1:1 and end their turn
+                if take_even_money == 'yes':
+                    self.gambler.payout(self.gambler.first_hand().wager)  # TODO: Better way to payout a winning hand?
+                    return
+
+            # If the gambler does not have blackjack, give them the option to take insurance equal to half their wager.
+            else:
+                wants_insurance = get_user_input(f"{base_prompt} Insurance? (y/n) => ", yes_no_response)
+                if wants_insurance == 'yes':
+                    try:
+                        # Take an additional bet out of the player's bankroll that is 1/2 of their wager.
+                        self.gambler.buy_insurance_for_first_hand()
+                    except InsufficientBankrollError:
+                        print("Insufficient bankroll to buy insurance!")
+            
+        # If the dealer has blackjack,
+
+
+        # If the dealer has blackjack, assess insurancea and other wagers. The turn is over.
+        if dealer_has_black_jack:
+            
+            # Payout successful insurance bet (if applicable)
+            insurance_amount = self.gambler.first_hand().insurance
+            if insurance_amount > 0:
+                print("Insurance bet won! Paying out 2:1 and reclaiming wagered amount.")
+                self.gambler.payout(insurance_amount * 3)
+
+            # If the player has blackjack, it's a push and turn is over
+
+
+            # If the player does not have blackjack, take their money, and the turn is over.
+
+        else:
+            print("Dealer does NOT have blackjack. Insurance wagers lost.")
+
+        # If we've gotten here, the player has won a legitmate blackjack. Pay 3:2, and the turn is over.
+        if gambler_has_black_jack:
+            pass
+
+        # Play the Gambler's turn
         self.gambler.play_turn()
 
-        # 5) Play the Dealer's turn
+        # Play the Dealer's turn
 
-        # 6) Pay out wins / collect losses
+        # Pay out wins / collect losses
 
-        # 7) Reset all hands
+        # Reset all hands
         self.discard_hands()
 

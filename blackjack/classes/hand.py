@@ -5,9 +5,10 @@ class Hand:
 
     all_ = []
 
-    def __init__(self, player, wager=0):
+    def __init__(self, player, wager=0, insurance=0):
         self.player = player
         self.wager = wager
+        self.insurance = insurance
 
         Hand.all_.append(self)
 
@@ -34,10 +35,8 @@ class Hand:
 
         # If there are aces in the hand, extra logic is needed:
         # - Each ace can have 2 possible values (1 or 11). 
-        # - However, only one ace per hand can logically be 11 in order to *possibly* stay under a total of 22.
-        # - There will always be 2 *possible non-busting* hand totals if playing with a single deck.
-        #   This is because only one ace can be high, and with the max possible 4 aces: 11 + 1 + 1 + 1 = 14, 
-        #   which is *possibly non-busting* (depending on other cards in hand)
+        # - However, only one ace *per hand* can logically be 11 in order to *possibly* stay under a total of 22.
+        # - Thus, there will always be 2 *possibly non-busting* hand totals if there is at least one ace in the hand.
         high_total = non_ace_total + 11 + num_aces - 1
         low_total = non_ace_total + num_aces
 
@@ -59,15 +58,9 @@ class Hand:
     def is_blackjack(self):
         """Check whether the hand is blackjack."""
         _, high_total = self.possible_totals()
-        if high_total == 21 and len(self.cards()) == 2:
-            return True
-        else:
-            return False
+        return high_total == 21 and len(self.cards()) == 2
 
     def is_splittable(self):
         """Check whether the hand is splittable"""
         cards = self.cards()
-        if len(cards) == 2 and cards[0].name == cards[1].name:
-            return True
-        else:
-            return False
+        return len(cards) == 2 and cards[0].name == cards[1].name

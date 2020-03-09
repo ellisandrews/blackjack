@@ -27,13 +27,13 @@ class Player:
 
 class Gambler(Player):
     
-    def __init__(self, name, bankroll=0, wager=0):
+    def __init__(self, name, bankroll=0, auto_wager=0):
         super().__init__(name)
         self.bankroll = bankroll
-        self.wager = wager
+        self.auto_wager = auto_wager
 
-        # Player is finished if they have set their wager to $0 or if they are out of money
-        self.is_finished = lambda: self.wager == 0 or self.bankroll + self.wager == 0
+        # Player is finished if they have set their auto_wager to $0 or if they are out of money
+        self.is_finished = lambda: self.auto_wager == 0 or self.bankroll == 0
 
     def __str__(self):
         return super().__str__() + f" | Bankroll: ${self.bankroll}"
@@ -64,33 +64,30 @@ class Gambler(Player):
         except InsufficientBankrollError:
             raise
 
-    def move_wager_to_bankroll(self):
-        self._add_bankroll(self.wager)
-        self.wager = 0
+    def zero_auto_wager(self):
+        self.auto_wager = 0
 
-    def set_new_wager(self, wager):
-        # Make sure bankroll is large enough to place the wager
-        try:
-            self._subtract_bankroll(wager)
-            self.wager = wager
-        except InsufficientBankrollError:
-            raise
+    def set_new_auto_wager(self, auto_wager):
+        # Make sure bankroll is large enough
+        if auto_wager > self.bankroll:
+            raise InsufficientBankrollError
+        self.auto_wager = auto_wager
 
-    def set_new_wager_from_input(self, retries=3):
+    def set_new_auto_wager_from_input(self, retries=3):
     
-        # Move their current wager to their bankroll
-        self.move_wager_to_bankroll()
+        # Set their auto_wager to $0
+        self.zero_auto_wager()
 
-        # Ask them for a new wager and set it, with some validation
+        # Ask them for a new auto wager and set it, with some validation
         attempts = 0
         success = False        
         while not success and attempts < retries:
             # This validates that they've entered a float
-            new_wager = get_user_input(f"Please enter a wager (Bankroll: ${self.bankroll}; enter $0 to cash out): $", float_response)
+            new_auto_wager = get_user_input(f"Please enter an auto-wager amount (Bankroll: ${self.bankroll}; enter $0 to cash out): $", float_response)
             
             # This validates that they've entered a wager <= their bankroll
             try:
-                self.set_new_wager(new_wager)
+                self.set_new_auto_wager(new_auto_wager)
                 success = True
             except InsufficientBankrollError:
                 print('Insufficient bankroll to place that wager. Please try again.')

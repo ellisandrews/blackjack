@@ -26,7 +26,7 @@ class Table:
 
         # Ask if the gambler wants to cash out or change their wager
         response = get_user_input(
-            f"\n{self.gambler.name}, change your wager or cash out (Bankroll: ${self.gambler.bankroll}; current wager: ${self.gambler.wager})? (y/n) => ", 
+            f"\n{self.gambler.name}, change your auto-wager or cash out (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager})? (y/n) => ", 
             yes_no_response
         )
         
@@ -43,7 +43,7 @@ class Table:
 
             # Make a new Hand for the player. If it's a Gambler, their wager is applied to the Hand.
             if isinstance(player, Gambler):
-                hand = Hand(player, player.wager)  
+                hand = Hand(player, player.auto_wager)  
             else:
                 hand = Hand(player)
             
@@ -102,13 +102,16 @@ class Table:
                         self.gambler.buy_insurance_for_first_hand()
                     except InsufficientBankrollError:
                         print("Insufficient bankroll to buy insurance!")
-            
-        # If the dealer has blackjack,
 
 
-        # If the dealer has blackjack, assess insurancea and other wagers. The turn is over.
+            if not dealer_has_black_jack:
+                print("Dealer does NOT have blackjack. Any insurance wagers lost.")
+                # TODO: Collect insurance wagers!
+
+        # If the dealer has blackjack, assess insurance and other wagers. The turn is over.
         if dealer_has_black_jack:
-            
+            print("Dealer has blackjack.")
+
             # Payout successful insurance bet (if applicable)
             insurance_amount = self.gambler.first_hand().insurance
             if insurance_amount > 0:
@@ -116,16 +119,17 @@ class Table:
                 self.gambler.payout(insurance_amount * 3)
 
             # If the player has blackjack, it's a push and turn is over
-
-
+            if gambler_has_black_jack:
+                print("Hand is a push.")
+                return
             # If the player does not have blackjack, take their money, and the turn is over.
-
+            else:
+                print(f"{self.gambler.name} lost the hand.")
         else:
-            print("Dealer does NOT have blackjack. Insurance wagers lost.")
-
-        # If we've gotten here, the player has won a legitmate blackjack. Pay 3:2, and the turn is over.
-        if gambler_has_black_jack:
-            pass
+            # If the player has won a blackjack (i.e. dealer doesn't have blackjack and the didn't take even money) Pay 3:2, and the turn is over.
+            if gambler_has_black_jack:
+                print(f"{self.gambler.name} won hand with blackjack! Paying 3:2.")
+                self.gambler.payout(self.gambler.first_hand().wager)
 
         # Play the Gambler's turn
         self.gambler.play_turn()

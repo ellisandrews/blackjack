@@ -15,7 +15,7 @@ def setup_table():
 
     # Create the Gambler, and ask them to set an initial wager
     gambler = Gambler(name, bankroll=bankroll)
-    gambler.set_new_wager_from_input()
+    gambler.set_new_auto_wager_from_input()
 
     # Create the Table for the Gambler. It will autotmatically create a Dealer and a Shoe for itself.
     table = Table(gambler)

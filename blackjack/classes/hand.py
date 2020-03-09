@@ -5,11 +5,8 @@ class Hand:
 
     all_ = []
 
-    def __init__(self, player, wager=0, insurance=0):
+    def __init__(self, player):
         self.player = player
-        self.wager = wager
-        self.insurance = insurance
-
         Hand.all_.append(self)
 
     def __str__(self):
@@ -64,3 +61,50 @@ class Hand:
         """Check whether the hand is splittable"""
         cards = self.cards()
         return len(cards) == 2 and cards[0].name == cards[1].name
+
+
+class GamblerHand(Hand):
+
+    def __init__(self, player, wager=0, insurance=0):
+        super().__init__(player)
+        self.wager = wager
+        self.insurance = insurance
+
+    def payout(self, kind, odds):
+        if kind == 'wager':
+            self._perform_payout('winning_wager', odds)
+            self._perform_payout('wager_reclaim')
+        elif kind == 'insurance':
+            self._perform_payout('winning_insurance', odds)
+            self._perform_payout('insurance_reclaim')
+        else:
+            raise ValueError(f"Invalid payout kind: '{kind}'")
+
+    def _perform_payout(self, kind, odds=None):
+
+        # Validate args passed in
+        if kind in ('winnin_wager', 'winning_insurance'):
+            assert odds, 'Must specify odds for wager payouts!'
+            antecedent, consequent = map(int, odds.split(':'))
+        
+        # Really wish python had case statements...
+        if kind == 'winning_wager':
+            amount = self.wager * antecedent / consequent
+            message = f"Winning hand payout of ${amount} added to bankroll."
+        
+        elif kind == 'wager_reclaim':
+            amount = self.wager
+            message = f"Reclaimed winning hand wager of ${amount}."
+        
+        elif kind == 'winning_insurance':
+            amount = self.insurance * antecedent / consequent
+            message = f"Winning insurance payout of ${amount} added to bankroll."
+        
+        elif kind == 'insurance_reclaim':
+            amount = self.insurance
+            message = f"Reclaimed winning insurance wager of ${amount}."
+
+        else:
+            raise ValueError(f"Invalid payout kind: '{kind}'")
+
+        self.player.payout(amount, message)

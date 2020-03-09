@@ -42,9 +42,9 @@ class Gambler(Player):
         # Helper method for action that happens on the initial hand dealt to the gambler
         return self.hands()[0]
 
-    def payout(self, amount):
+    def payout(self, amount, message):
         self._add_bankroll(amount)
-        print(f"Payout of ${amount} added to {self.name}'s bankroll.")
+        print(message)
 
     def _add_bankroll(self, amount):
         self.bankroll += amount
@@ -132,8 +132,11 @@ class Dealer(Player):
     def print_up_card(self):
         print(f"Dealer's Up Card: {self.up_card()} -- ({self.up_card().value})")
 
-    def up_card_is_ace(self):
+    def is_showing_ace(self):
         return self.up_card().name == 'Ace'
+
+    def is_showing_ace_or_face_card(self):
+        return self.is_showing_ace() or self.up_card().value == 10
 
     def print_hand(self):
 

@@ -1,6 +1,6 @@
 import random
 
-from blackjack.classes.deck import Deck
+from blackjack.models.deck import Deck
 
 
 # NOTE: Shoe is 1-to-1 with Table

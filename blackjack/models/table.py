@@ -1,7 +1,7 @@
-from blackjack.classes.hand import GamblerHand, Hand
-from blackjack.classes.player import Dealer, Gambler, Player
-from blackjack.classes.shoe import Shoe
 from blackjack.exc import InsufficientBankrollError
+from blackjack.models.hand import GamblerHand, Hand
+from blackjack.models.player import Dealer, Gambler, Player
+from blackjack.models.shoe import Shoe
 from blackjack.utils import get_user_input, float_response, yes_no_response
 
 

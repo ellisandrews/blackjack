@@ -1,6 +1,6 @@
 import random
 
-from blackjack.classes.card import Card
+from blackjack.models.card import Card
 
 
 class Deck:

@@ -54,12 +54,12 @@ class Gambler(Player):
             raise InsufficientBankrollError
         self.bankroll -= amount
 
-    def buy_insurance_for_first_hand(self):
-        first_hand = self.first_hand() 
-        insurance_amount = first_hand.wager / 2  # Insurance is 1/2 the amount wagered on the hand
+    def place_insurance_bet(self):
+        hand = self.first_hand()  # Insurance only comes into play for the dealt hand
+        insurance_amount = hand.wager / 2  # Insurance is 1/2 the amount wagered on the hand
         try:      
             self._subtract_bankroll(insurance_amount)  
-            first_hand.insurance = insurance_amount
+            hand.insurance = insurance_amount
             print(f"${insurance_amount} insurance wager placed.")
         except InsufficientBankrollError:
             raise
@@ -105,9 +105,9 @@ class Gambler(Player):
 
             # There will always be a low total. If there is a high total, display that too.
             if high_total:
-                print(f"Hand (${hand.wager}): {hand} -- ({low_total} or {high_total})")
+                print(f"{self.name}'s Hand (${hand.wager}): {hand} -- ({low_total} or {high_total})")
             else:
-                print(f"Hand (${hand.wager}): {hand} -- ({low_total})")
+                print(f"{self.name}'s Hand (${hand.wager}): {hand} -- ({low_total})")
 
     def play_turn(self):
         
@@ -135,8 +135,8 @@ class Dealer(Player):
     def is_showing_ace(self):
         return self.up_card().name == 'Ace'
 
-    def is_showing_ace_or_face_card(self):
-        return self.is_showing_ace() or self.up_card().value == 10
+    def is_showing_face_card(self):
+        return self.up_card().value == 10
 
     def print_hand(self):
 

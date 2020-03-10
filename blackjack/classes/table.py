@@ -16,43 +16,46 @@ class Table:
         self.shoe = shoe or Shoe()
         self.number = Table.counter
 
-        # Derived attribute for ease of gameplay
-        self.players = [self.gambler, self.dealer]
-
         Table.counter += 1
         Table.all_.append(self)
 
     def check_gambler_wager(self):
 
-        # Ask if the gambler wants to cash out or change their auto-wager
-        response = get_user_input(
-            f"\n{self.gambler.name}, change your auto-wager or cash out (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager})? (y/n) => ", 
-            yes_no_response
-        )
-        
-        # If they want to make a change, make it
-        if response == 'yes':
+        # Check if the gambler still has sufficient bankroll to place the auto-wager
+        if self.gambler.can_place_auto_wager():
+
+            # Ask if the gambler wants to cash out or change their auto-wager
+            response = get_user_input(
+                f"\n{self.gambler.name}, change your auto-wager or cash out? (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager}) (y/n) => ", 
+                yes_no_response
+            )
+            
+            # If they want to make a change, make it (vetting embedded in method)
+            if response == 'yes':
+                self.gambler.set_new_auto_wager_from_input()
+
+        # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
+        else:
+            print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager})")
             self.gambler.set_new_auto_wager_from_input()
 
     def deal(self):
+        # Create the two hands to be dealt to
+        gambler_hand = GamblerHand(self.gambler)
+        dealer_hand = Hand(self.dealer)
 
+        # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
+        self.gambler.place_auto_wager()
+
+        # Deal like they do a casinos -- one card to each player at a time, starting with the gambler.
         print("\nDealing...\n")
-
-        # Deal to the gambler and the dealer
-        for player in self.players:
-
-            # Make a new Hand for the player. If it's a Gambler, their wager is applied to the Hand.
-            if isinstance(player, Gambler):
-                hand = GamblerHand(player, player.auto_wager)  
-            else:
-                hand = Hand(player)
-            
-            dealt_card_1, dealt_card_2 = self.shoe.deal_two_cards()  # Deal 2 Cards from the Shoe.
-            dealt_card_1.hand, dealt_card_2.hand = hand, hand  # Assign the 2 Cards to the Player's Hand. 
-
+        dealt_card_1, dealt_card_2, dealt_card_3, dealt_card_4 = self.shoe.deal_n_cards(4)
+        dealt_card_1.hand, dealt_card_3.hand = gambler_hand, gambler_hand
+        dealt_card_2.hand, dealt_card_4.hand = dealer_hand, dealer_hand
+ 
     def discard_hands(self):
-        for player in self.players:
-            player.discard_hands()
+        self.gambler.discard_hands()
+        self.dealer.discard_hands()
 
     @staticmethod
     def gambler_wants_even_money():
@@ -66,7 +69,7 @@ class Table:
 
         print('\n--- New Turn ---')
 
-        # Ask the Gambler if they would like to change their wager (or cash out).
+        # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
         self.check_gambler_wager()
         
         # If they cash out, don't play the turn.
@@ -74,7 +77,7 @@ class Table:
         if self.gambler.is_finished():
             return
 
-        # Deal 2 Cards from the Shoe to each Player (the Gambler and Dealer).
+        # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
         self.deal()
 
         # Display the Dealer's up card.
@@ -117,13 +120,17 @@ class Table:
                             self.gambler.first_hand().payout('wager', '3:2') 
                             print('TURN OVER')  # TURN OVER
                 
-                # If the gambler does not have blackjack, they can buy insurance.
+                # If the gambler does not have blackjack they can buy insurance.
                 else:
-                    if self.gambler_wants_insurance() == 'yes':
-                        
+
+                    # Gambler must have sufficient bankroll to place an insurance bet.
+                    gambler_can_afford_insurance = self.gambler.can_place_insurance_wager()
+
+                    if gambler_can_afford_insurance and self.gambler_wants_insurance() == 'yes':
+
                         # Insurnace is a side bet that is half their wager, and pays 2:1 if dealer has blackjack.
-                        self.gambler.place_insurance_bet()
-                        
+                        self.gambler.place_insurance_bet()            
+
                         if dealer_has_blackjack:
                             print(f"Dealer has BLACKJACK. {self.gambler.name}'s insurnace wager wins 2:1 but hand wager loses.")
                             self.gambler.first_hand().payout('insurance', '2:1')
@@ -134,8 +141,11 @@ class Table:
                             # play_hand()
                             print('playing hand...')
 
-                    # If they do not place an insurance bet, they lose if the dealer has blackjack. Otherwise, hand continues.
+                    # If they do not (or cannot) place an insurance bet, they lose if the dealer has blackjack. Otherwise, hand continues.
                     else:
+                        if not gambler_can_afford_insurance:
+                            print('Insufficient bankroll to place insurance wager.')
+
                         if dealer_has_blackjack:
                             print(f"Dealer has BLACKJACK. {self.gambler.name} loses the hand.")
                             print('TURN OVER')  # TURN OVER
@@ -189,4 +199,3 @@ class Table:
 
         # Reset all hands
         self.discard_hands()
-

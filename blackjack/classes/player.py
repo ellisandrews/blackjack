@@ -20,7 +20,8 @@ class Player:
         return [hand for hand in Hand.all_ if hand.player == self]
 
     def discard_hands(self):
-        # TODO: Delete the actual object entirely so we won't have Hand.all_ growing forever?
+        # TODO: Delete the actual object entirely so we won't have Hand.all_ growing forever? 
+        #       Maybe just reset set Hand.all_ = [] somewhere, wiping out all hands.
         for hand in self.hands():
             hand.player = None
 
@@ -54,15 +55,33 @@ class Gambler(Player):
             raise InsufficientBankrollError
         self.bankroll -= amount
 
-    def place_insurance_bet(self):
+    def can_place_auto_wager(self):
+        """Check whether the gambler has sufficient bankroll to place the auto-wager."""
+        return self.auto_wager <= self.bankroll
+
+    def can_place_insurance_wager(self):
+        """Check whether a gambler has sufficient bankroll to place an insurance wager."""
+        # Insurance only applies to the dealt hand. Insurance is half the hand's wager.
+        return self.first_hand().wager / 2 <= self.bankroll
+
+    def place_auto_wager(self):
+        hand = self.first_hand()  # Auto-wager only comes into play for the dealt hand
+        if self.can_place_auto_wager():      
+            self._subtract_bankroll(self.auto_wager)  
+            hand.wager = self.auto_wager
+            print(f"${self.auto_wager} wager placed on hand.")
+        else:
+            raise InsufficientBankrollError('Insufficient bankroll to place auto-wager.')
+
+    def place_insurance_wager(self):
         hand = self.first_hand()  # Insurance only comes into play for the dealt hand
         insurance_amount = hand.wager / 2  # Insurance is 1/2 the amount wagered on the hand
-        try:      
+        if self.can_place_insurance_wager():
             self._subtract_bankroll(insurance_amount)  
             hand.insurance = insurance_amount
             print(f"${insurance_amount} insurance wager placed.")
-        except InsufficientBankrollError:
-            raise
+        else:
+            raise InsufficientBankrollError('Insufficient bankroll to place insurance wager.')
 
     def zero_auto_wager(self):
         self.auto_wager = 0
@@ -70,8 +89,9 @@ class Gambler(Player):
     def set_new_auto_wager(self, auto_wager):
         # Make sure bankroll is large enough
         if auto_wager > self.bankroll:
-            raise InsufficientBankrollError
-        self.auto_wager = auto_wager
+            raise InsufficientBankrollError('Insufficient bankroll to set auto-wager.')
+        else:
+            self.auto_wager = auto_wager
 
     def set_new_auto_wager_from_input(self, retries=3):
     
@@ -103,11 +123,16 @@ class Gambler(Player):
             # Get possible hand total(s) to display
             low_total, high_total = hand.possible_totals()
 
-            # There will always be a low total. If there is a high total, display that too.
-            if high_total:
-                print(f"{self.name}'s Hand (${hand.wager}): {hand} -- ({low_total} or {high_total})")
+            # Base string to always print per hand
+            base = f"{self.name}'s Hand (${hand.wager}): {hand} -- "
+            
+            # Print the totals that make sense
+            if high_total == 21:
+                print(base + f"({high_total})")
+            elif high_total:
+                print(base + f"({low_total} or {high_total})")
             else:
-                print(f"{self.name}'s Hand (${hand.wager}): {hand} -- ({low_total})")
+                print(base + f"({low_total})")
 
     def play_turn(self):
         
@@ -130,6 +155,7 @@ class Dealer(Player):
         return self.hand().cards()[0]
 
     def print_up_card(self):
+        # TODO: If this is an Ace, how to handle?
         print(f"Dealer's Up Card: {self.up_card()} -- ({self.up_card().value})")
 
     def is_showing_ace(self):

@@ -47,5 +47,5 @@ class Shoe:
             self.reset_card_pile()
         return dealt_card
 
-    def deal_two_cards(self):
-        return self.deal_card(), self.deal_card()
+    def deal_n_cards(self, num_cards):
+        return [self.deal_card() for _ in range(num_cards)]

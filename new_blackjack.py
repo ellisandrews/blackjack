@@ -55,7 +55,7 @@ if __name__ == '__main__':
         table.play()
 
     # Print a final message after the gambler is finished
-    if table.gambler.wager == 0:    
+    if table.gambler.auto_wager == 0:    
         print(f"{table.gambler.name} cashed out with bankroll: ${table.gambler.bankroll}. Thanks for playing!")
     else:
         print(f"{table.gambler.name} is out of money. Better luck next time!")

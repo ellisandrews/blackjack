@@ -1,7 +1,5 @@
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import GamblerHand, Hand
-from blackjack.models.player import Dealer, Gambler, Player
-from blackjack.models.shoe import Shoe
 from blackjack.utils import get_user_input, float_response, yes_no_response
 
 
@@ -10,10 +8,10 @@ class Table:
     all_ = []
     counter = 1
 
-    def __init__(self, gambler, dealer=None, shoe=None):
+    def __init__(self, gambler, dealer, shoe):
         self.gambler = gambler
-        self.dealer = dealer or Dealer()
-        self.shoe = shoe or Shoe()
+        self.dealer = dealer
+        self.shoe = shoe
         self.number = Table.counter
 
         Table.counter += 1
@@ -194,8 +192,10 @@ class Table:
 
             # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
             result = self.play_pre_turn()
+
+            print()
+
             if result == 'turn over':
-                print()
                 return
 
             # Play the Gambler's turn

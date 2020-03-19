@@ -17,8 +17,12 @@ def setup_table():
     gambler = Gambler(name, bankroll=bankroll)
     gambler.set_new_auto_wager_from_input()
 
-    # Create the Table for the Gambler. It will autotmatically create a Dealer and a Shoe for itself.
-    table = Table(gambler)
+    # Create a Dealer and a Shoe for the Table.
+    dealer = Dealer()
+    shoe = Shoe()
+
+    # Create the Table for the Gambler.
+    table = Table(gambler, dealer, shoe)
 
     # Create decks associated with the Table's Shoe
     number_of_decks = get_user_input("Please enter the number of decks to use => ", int_response)

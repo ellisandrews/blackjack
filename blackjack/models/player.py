@@ -146,32 +146,38 @@ class Gambler(Player):
 
         while not (hand.is_21() or hand.is_busted()):
 
+            # TODO: Delete
+            print(hand.cards())
+            print()
+
             # Default turn options
-            options = OrderedDict([('hit', 'h'), ('stand', 's'), ('double', 'd')])
+            options = OrderedDict([('h', 'hit'), ('s', 'stand'), ('d', 'double')])
 
             # Add the option to split if applicable
             if hand.is_splittable():
-                options['split'] = 'x'
+                options['x'] = 'split'
 
-            display_options = [f"{option} ({abbreviation})" for option, abbreviation in options.items()]
+            display_options = [f"{option} ({abbreviation})" for abbreviation, option in options.items()]
 
             response = get_user_input(
                 f"What would you like to do?\n[ {' , '.join(display_options)} ] => ",
-                partial(choice_response, choices=options.values())
+                partial(choice_response, choices=options.keys())
             )
 
-            if options[response] == 'hit':
+            action = options[response]
+
+            if action == 'hit':
                 # Deal another card and re-run loop
                 print('Hitting...')
                 hand.hit()
-            elif options[response] == 'stand':
+            elif action == 'stand':
                 print('Stood.')
                 break
-            elif options[response] == 'double':
+            elif action == 'double':
                 print('Doubling...')
                 hand.hit()
                 break
-            elif options[response] == 'split':
+            elif action == 'split':
                 # Check if the user has enough bankroll to split
                 # Split cards into their own hands
                 # Add another wager equal to the first
@@ -182,6 +188,11 @@ class Gambler(Player):
                 pass
             else:
                 raise Exception('Unhandled response.')
+
+        # TODO: Hand is in order of card creation right now. Should be in order of dealing!
+        # TODO: Delete
+        print(hand.cards())
+        print()
 
     def play_turn(self):
         """Play the gambler's turn"""

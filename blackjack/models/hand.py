@@ -52,16 +52,30 @@ class Hand:
                 num_aces += 1
         return num_aces
 
+    def is_21(self):
+        """Check if the hand totals to 21."""
+        low_total, high_total = self.possible_totals()
+        return low_total == 21 or high_total == 21
+
     def is_blackjack(self):
         """Check whether the hand is blackjack."""
         _, high_total = self.possible_totals()
         return high_total == 21 and len(self.cards()) == 2
 
     def is_splittable(self):
-        """Check whether the hand is splittable"""
+        """Check whether the hand is splittable."""
         cards = self.cards()
         return len(cards) == 2 and cards[0].name == cards[1].name
 
+    def is_busted(self):
+        """Check whether the hand is busted."""
+        low_total, _ = self.possible_totals()
+        return low_total > 21
+
+    def hit(self):
+        """Add a card to the hand from the player's table's shoe."""
+        card = self.player.table().shoe.deal_card()
+        card.hand = self
 
 class GamblerHand(Hand):
 

@@ -31,6 +31,14 @@ def int_response(response):
         return INVALID_RESPONSE
 
 
+def choice_response(response, choices):
+    """Check whether user's keyboard input is a valid choice from a collection."""
+    response = response.lower()
+    if response not in choices:
+        return INVALID_RESPONSE
+    else:
+        return response
+
 # Customizable user input function
 
 def get_user_input(prompt, parsing_func, retries=3):

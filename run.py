@@ -21,7 +21,7 @@ def setup_table():
     table = Table(gambler)
 
     # Create decks associated with the Table's Shoe
-    number_of_decks = get_user_input("Please enter the number of decks to use (integer) => ", int_response)
+    number_of_decks = get_user_input("Please enter the number of decks to use => ", int_response)
     for _ in range(number_of_decks):
         deck = Deck(shoe=table.shoe)  # Create the Deck, associate with the Shoe
         deck.populate()               # Populate the Deck with cards

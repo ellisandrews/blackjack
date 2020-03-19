@@ -1,6 +1,10 @@
+from collections import OrderedDict
+from functools import partial
+
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import Hand
-from blackjack.utils import float_response, get_user_input, max_retries_exit
+from blackjack.models.table import Table
+from blackjack.utils import choice_response, float_response, get_user_input, max_retries_exit
 
 
 class Player:
@@ -38,6 +42,9 @@ class Gambler(Player):
 
     def __str__(self):
         return super().__str__() + f" | Bankroll: ${self.bankroll}"
+
+    def table(self):
+        return next((table for table in Table.all_ if table.gambler == self), None)
 
     def first_hand(self):
         # Helper method for action that happens on the initial hand dealt to the gambler
@@ -134,18 +141,60 @@ class Gambler(Player):
             else:
                 print(base + f"({low_total})")
 
+    def play_hand(self, hand):
+        """Play a hand."""
+
+        while not (hand.is_21() or hand.is_busted()):
+
+            # Default turn options
+            options = OrderedDict([('hit', 'h'), ('stand', 's'), ('double', 'd')])
+
+            # Add the option to split if applicable
+            if hand.is_splittable():
+                options['split'] = 'x'
+
+            display_options = [f"{option} ({abbreviation})" for option, abbreviation in options.items()]
+
+            response = get_user_input(
+                f"What would you like to do?\n[ {' , '.join(display_options)} ] => ",
+                partial(choice_response, choices=options.values())
+            )
+
+            if options[response] == 'hit':
+                # Deal another card and re-run loop
+                print('Hitting...')
+                hand.hit()
+            elif options[response] == 'stand':
+                print('Stood.')
+                break
+            elif options[response] == 'double':
+                print('Doubling...')
+                hand.hit()
+                break
+            elif options[response] == 'split':
+                # Check if the user has enough bankroll to split
+                # Split cards into their own hands
+                # Add another wager equal to the first
+                # If the card is an Ace, they only get 1 more card on each hand
+                # If not, run loop for each hand
+                # TODO!
+                print('Splitting...')
+                pass
+            else:
+                raise Exception('Unhandled response.')
+
     def play_turn(self):
-        
-        # Print out the gambler's hand(s)
-        self.print_hands()
-
-        response = input("\nWhat would you like to do?\n[ hit (h), stand (s), double (d), split (x) ] => ")
-
+        """Play the gambler's turn"""
+        for hand in self.hands():
+            self.play_hand(hand)
 
 class Dealer(Player):
 
     def __init__(self, name='Dealer'):
         super().__init__(name)
+
+    def table(self):
+        return next((table for table in Table.all_ if table.dealer == self), None)
 
     def hand(self):
         # The dealer will only ever have a single hand

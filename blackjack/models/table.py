@@ -1,6 +1,7 @@
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.user_input import get_user_input, float_response, yes_no_response
+from blackjack.utils import clear
 
 
 class Table:
@@ -174,6 +175,7 @@ class Table:
     def play(self):
 
         try:
+            clear()
             print('\n--- New Turn ---\n')
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.

@@ -2,7 +2,7 @@ from collections import OrderedDict
 from functools import partial
 
 from blackjack.models.card import Card
-from blackjack.utils import choice_response, get_user_input
+from blackjack.user_input import choice_response, get_user_input
 
 
 class Hand:

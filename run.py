@@ -4,7 +4,7 @@ from blackjack.models.deck import Deck
 from blackjack.models.player import Dealer, Gambler
 from blackjack.models.shoe import Shoe
 from blackjack.models.table import Table
-from blackjack.utils import get_user_input, float_response, int_response
+from blackjack.user_input import get_user_input, float_response, int_response
 
 
 def setup_table():

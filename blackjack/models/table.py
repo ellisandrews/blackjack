@@ -1,6 +1,6 @@
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.utils import get_user_input, float_response, yes_no_response
+from blackjack.user_input import get_user_input, float_response, yes_no_response
 
 
 class Table:
@@ -65,7 +65,7 @@ class Table:
         # Check if the gambler has blackjack
         gambler_has_blackjack = self.gambler.first_hand().is_blackjack()
         if gambler_has_blackjack:
-            print(f"{self.gambler.name} has BLACKJACK!")
+            print(f"{self.gambler.name} HAS BLACKJACK!")
 
         # Dealer can only have blackjack (which ends the turn) if they are showing a face card (value=10) or an ace.
         if self.dealer.is_showing_ace() or self.dealer.is_showing_face_card():
@@ -86,10 +86,10 @@ class Table:
                         self.gambler.first_hand().payout('wager', '1:1') 
                     else:
                         if dealer_has_blackjack:
-                            print('Dealer has BLACKJACK. Hand is a push.')
+                            print('Dealer HAS BLACKJACK. Hand is a push.')
                             self.gambler.first_hand().payout('push')
                         else:
-                            print(f"Dealer does not have BLACKJACK. {self.gambler.name} wins 3:2.")
+                            print(f"Dealer DOES NOT HAVE BLACKJACK. {self.gambler.name} wins 3:2.")
                             self.gambler.first_hand().payout('wager', '3:2') 
 
                     # The turn is over no matter what if the gambler has blackjack
@@ -107,11 +107,11 @@ class Table:
 
                         # The turn is over if the dealer has blackjack. Otherwise, continue on to playing the hand.
                         if dealer_has_blackjack:
-                            print(f"Dealer has BLACKJACK. {self.gambler.name}'s insurnace wager wins 2:1 but hand wager loses.")
+                            print(f"Dealer HAS BLACKJACK. {self.gambler.name}'s insurnace wager wins 2:1 but hand wager loses.")
                             self.gambler.first_hand().payout('insurance', '2:1')
                             return 'turn over'
                         else:
-                            print(f"Dealer does not have BLACKJACK. {self.gambler.name}'s insurance wager loses.")
+                            print(f"Dealer DOES NOT HAVE BLACKJACK. {self.gambler.name}'s insurance wager loses.")
                             return 'play turn'
 
                     # If the gambler does not (or cannot) place an insurance bet, they lose if the dealer has blackjack. Otherwise, hand continues.
@@ -120,32 +120,32 @@ class Table:
                             print('Insufficient bankroll to place insurance wager.')
 
                         if dealer_has_blackjack:
-                            print(f"Dealer has BLACKJACK. {self.gambler.name} loses the hand.")
+                            print(f"Dealer HAS BLACKJACK. {self.gambler.name} loses the hand.")
                             return 'turn over'
                         else:
-                            print('Dealer does not have BLACKJACK.')
+                            print('Dealer DOES NOT HAVE BLACKJACK.')
                             return 'play turn'
 
             # If the dealer's upcard is a face card, insurance is not in play but need to check if the dealer has blackjack.
             else:
                 
-                print('Checking if the dealer has BLACKJACK...')
+                print('Checking if the dealer HAS BLACKJACK...')
 
                 # If the dealer has blackjack, it's a push if the player also has blackjack. Otherwise, the player loses.
                 if dealer_has_blackjack:
 
                     if gambler_has_blackjack:
-                        print('Dealer has BLACKJACK. Hand is a push.')
+                        print('Dealer HAS BLACKJACK. Hand is a push.')
                         self.gambler.first_hand().payout('push')  
                     else:
-                        print(f"Dealer has BLACKJACK. {self.gambler.name} loses the hand.")
+                        print(f"Dealer HAS BLACKJACK. {self.gambler.name} loses the hand.")
                         
                     # The turn is over no matter what if the dealer has blackjack
                     return 'turn over'
 
                 # If dealer doesn't have blackjack, continue with playing the hand.
                 else:
-                    print('Dealer does not have BLACKJACK.')
+                    print('Dealer DOES NOT HAVE BLACKJACK.')
                     return 'play turn'
 
         # If the dealer's upcard is not an ace or a face card, they cannot have blackjack.

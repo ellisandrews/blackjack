@@ -1,7 +1,7 @@
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import Hand
 from blackjack.models.table import Table
-from blackjack.utils import float_response, get_user_input, max_retries_exit, yes_no_response
+from blackjack.user_input import float_response, get_user_input, max_retries_exit, yes_no_response
 
 
 class Player:

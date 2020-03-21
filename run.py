@@ -9,9 +9,9 @@ from blackjack.utils import get_user_input, float_response, int_response
 
 def setup_table():
 
-    # TODO: Should they always start with a default amount? Or allow to enter here?
-    name = input("Please enter a player name => ")
-    bankroll = get_user_input("Please enter a bankroll amount => $", float_response)
+    # TODO: Have hard-coded values for testing! Remove and uncomment for production
+    name = 'Ellis' # input("Please enter a player name => ")
+    bankroll = 1000.0  # get_user_input("Please enter a bankroll amount => $", float_response)
 
     # Create the Gambler, and ask them to set an initial wager
     gambler = Gambler(name, bankroll=bankroll)
@@ -24,8 +24,9 @@ def setup_table():
     # Create the Table for the Gambler.
     table = Table(gambler, dealer, shoe)
 
+    # TODO: Hard-coded for testing! Remove and uncomment
     # Create decks associated with the Table's Shoe
-    number_of_decks = get_user_input("Please enter the number of decks to use => ", int_response)
+    number_of_decks = 1  # get_user_input("Please enter the number of decks to use => ", int_response)
     for _ in range(number_of_decks):
         deck = Deck(shoe=table.shoe)  # Create the Deck, associate with the Shoe
         deck.populate()               # Populate the Deck with cards

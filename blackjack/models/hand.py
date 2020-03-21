@@ -52,6 +52,18 @@ class Hand:
                 num_aces += 1
         return num_aces
 
+    def format_total(self):
+        # Get possible hand total(s) to display
+        low_total, high_total = self.possible_totals()
+
+        # Return string of total that makes sense
+        if high_total == 21:
+            return f"{high_total}"
+        elif high_total:
+            return f"{low_total} or {high_total}"
+        else:
+            return f"{low_total}"
+
     def is_21(self):
         """Check if the hand totals to 21."""
         low_total, high_total = self.possible_totals()
@@ -76,6 +88,7 @@ class Hand:
         """Add a card to the hand from the player's table's shoe."""
         card = self.player.table().shoe.deal_card()
         card.hand = self
+
 
 class GamblerHand(Hand):
 
@@ -132,6 +145,3 @@ class GamblerHand(Hand):
             raise ValueError(f"Invalid payout kind: '{kind}'")
 
         self.player.payout(amount, message)
-
-
-    # TODO: Write a method to deduct the hand wager from the player's bankroll if the wager(s) lose!

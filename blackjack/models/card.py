@@ -34,7 +34,3 @@ class Card:
 
     def __repr__(self):
         return self.__str__()
-
-    @classmethod
-    def clear_all(cls):
-        cls.all_ = []

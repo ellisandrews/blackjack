@@ -57,14 +57,6 @@ class Table:
         self.gambler.discard_hands()
         self.dealer.discard_hands()
 
-    @staticmethod
-    def gambler_wants_even_money():
-        return get_user_input("Take even money? (y/n) => ", yes_no_response)
-
-    @staticmethod
-    def gambler_wants_insurance():
-        return get_user_input("Insurance? (y/n) => ", yes_no_response)
-
     def play_pre_turn(self):
         """
         Carry out pre-turn flow for blackjacks, insurance, etc.
@@ -89,7 +81,7 @@ class Table:
                 # If the gambler has blackjack, they can either take even money or let it ride.
                 if gambler_has_blackjack:
 
-                    if self.gambler_wants_even_money() == 'yes':
+                    if self.gambler.wants_even_money() == 'yes':
                         print(f"{self.gambler.name} wins even money.")
                         self.gambler.first_hand().payout('wager', '1:1') 
                     else:
@@ -108,7 +100,7 @@ class Table:
                     # Gambler must have sufficient bankroll to place an insurance bet.
                     gambler_can_afford_insurance = self.gambler.can_place_insurance_wager()
 
-                    if gambler_can_afford_insurance and self.gambler_wants_insurance() == 'yes':
+                    if gambler_can_afford_insurance and self.gambler.wants_insurance() == 'yes':
 
                         # Insurnace is a side bet that is half their wager, and pays 2:1 if dealer has blackjack.
                         self.gambler.place_insurance_wager()            
@@ -166,27 +158,51 @@ class Table:
             else:
                 return 'play turn'
 
+    def print(self, hide_dealer=False):
+        
+        # Print the dealer header
+        print(f"\n{'-'*12}\n   DEALER   \n{'-'*12}\n")
+
+        # If hiding the dealer, only display data about the dealer's up card
+        print(f"Hand:")
+        if hide_dealer:
+            up_card = self.dealer.up_card()
+            print(f"\tUpcard: {up_card}")
+            print(f"\tTotal: {up_card.value if up_card.name != 'Ace' else '1 or 11'}")
+        else:
+            hand = self.dealer.hand()
+            print(f"\tCards: {hand}")
+            print(f"\tTotal: {hand.format_total()}")
+
+        # Print the gambler header
+        print(f"\n{'-'*12}\n   {self.gambler.name.upper()}   \n{'-'*12}")
+        
+        # Print the gambler's data
+        for i, hand in enumerate(self.gambler.hands()):
+            print(f"\nHand {i+1}:")
+            print(f"\tCards: {hand}")
+            print(f"\tTotal: {hand.format_total()}")
+            print(f"\tWager: ${hand.wager}")
+            if hand.insurance != 0:
+                print(f"\tInsurance: ${hand.insurance}")
+
     def play(self):
 
         try:
-            print('\n--- New Turn ---')
+            print('\n--- New Turn ---\n')
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
             self.check_gambler_wager()
             
             # If they cash out, don't play the turn.
-            # TODO: Print a message?
             if self.gambler.is_finished():
                 return
 
             # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
             self.deal()
 
-            # Display the Dealer's up card.
-            self.dealer.print_up_card()
-
-            # Display the Gambler's hand
-            self.gambler.print_hands()
+            # Print the table, hiding the dealer's buried card from the gambler
+            self.print(hide_dealer=True)
 
             print()
 

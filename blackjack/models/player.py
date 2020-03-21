@@ -4,7 +4,7 @@ from functools import partial
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import Hand
 from blackjack.models.table import Table
-from blackjack.utils import choice_response, float_response, get_user_input, max_retries_exit
+from blackjack.utils import choice_response, float_response, get_user_input, max_retries_exit, yes_no_response
 
 
 class Player:
@@ -24,10 +24,9 @@ class Player:
         return [hand for hand in Hand.all_ if hand.player == self]
 
     def discard_hands(self):
-        # TODO: Delete the actual object entirely so we won't have Hand.all_ growing forever? 
-        #       Maybe just reset set Hand.all_ = [] somewhere, wiping out all hands.
+        # Delete the hand from the single source of truth
         for hand in self.hands():
-            hand.player = None
+            Hand.all_.remove(hand)
 
 
 class Gambler(Player):
@@ -124,31 +123,18 @@ class Gambler(Player):
         if attempts == retries and not success:
             max_retries_exit()
 
-    def print_hands(self):
+    @staticmethod
+    def wants_even_money():
+        return get_user_input("Take even money? (y/n) => ", yes_no_response)
 
-        for hand in self.hands():
-            # Get possible hand total(s) to display
-            low_total, high_total = hand.possible_totals()
-
-            # Base string to always print per hand
-            base = f"{self.name}'s Hand (${hand.wager}): {hand} -- "
-            
-            # Print the totals that make sense
-            if high_total == 21:
-                print(base + f"({high_total})")
-            elif high_total:
-                print(base + f"({low_total} or {high_total})")
-            else:
-                print(base + f"({low_total})")
+    @staticmethod
+    def wants_insurance():
+        return get_user_input("Insurance? (y/n) => ", yes_no_response)
 
     def play_hand(self, hand):
         """Play a hand."""
 
         while not (hand.is_21() or hand.is_busted()):
-
-            # TODO: Delete
-            print(hand.cards())
-            print()
 
             # Default turn options
             options = OrderedDict([('h', 'hit'), ('s', 'stand'), ('d', 'double')])
@@ -189,15 +175,11 @@ class Gambler(Player):
             else:
                 raise Exception('Unhandled response.')
 
-        # TODO: Hand is in order of card creation right now. Should be in order of dealing!
-        # TODO: Delete
-        print(hand.cards())
-        print()
-
     def play_turn(self):
         """Play the gambler's turn"""
         for hand in self.hands():
             self.play_hand(hand)
+
 
 class Dealer(Player):
 
@@ -214,25 +196,8 @@ class Dealer(Player):
     def up_card(self):
         return self.hand().cards()[0]
 
-    def print_up_card(self):
-        # TODO: If this is an Ace, how to handle?
-        print(f"Dealer's Up Card: {self.up_card()} -- ({self.up_card().value})")
-
     def is_showing_ace(self):
         return self.up_card().name == 'Ace'
 
     def is_showing_face_card(self):
         return self.up_card().value == 10
-
-    def print_hand(self):
-
-        hand = self.hand()
-
-        # Get possible hand total(s) to display
-        low_total, high_total = hand.possible_totals()
-
-        # There will always be a low total. If there is a high total, display that too.
-        if high_total:
-            print(f"Hand: {hand} -- ({low_total} or {high_total})")
-        else:
-            print(f"Hand: {hand} -- ({low_total})")

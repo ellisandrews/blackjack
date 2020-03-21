@@ -1,5 +1,5 @@
 from blackjack.exc import InsufficientBankrollError
-from blackjack.models.hand import GamblerHand, Hand
+from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.utils import get_user_input, float_response, yes_no_response
 
 
@@ -40,7 +40,7 @@ class Table:
     def deal(self):
         # Create the two hands to be dealt to
         gambler_hand = GamblerHand(self.gambler)
-        dealer_hand = Hand(self.dealer)
+        dealer_hand = DealerHand(self.dealer)
 
         # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
         self.gambler.place_auto_wager()
@@ -160,31 +160,16 @@ class Table:
 
     def print(self, hide_dealer=False):
         
-        # Print the dealer header
+        # Print the dealer. If `hide_dealer` is True, don't factor in the dealer's buried card.
         print(f"\n{'-'*12}\n   DEALER   \n{'-'*12}\n")
-
-        # If hiding the dealer, only display data about the dealer's up card
-        print(f"Hand:")
-        if hide_dealer:
-            up_card = self.dealer.up_card()
-            print(f"\tUpcard: {up_card}")
-            print(f"\tTotal: {up_card.value if up_card.name != 'Ace' else '1 or 11'}")
-        else:
-            hand = self.dealer.hand()
-            print(f"\tCards: {hand}")
-            print(f"\tTotal: {hand.format_total()}")
+        self.dealer.hand().print(hide=hide_dealer)
 
         # Print the gambler header
         print(f"\n{'-'*12}\n   {self.gambler.name.upper()}   \n{'-'*12}")
         
         # Print the gambler's data
         for i, hand in enumerate(self.gambler.hands()):
-            print(f"\nHand {i+1}:")
-            print(f"\tCards: {hand}")
-            print(f"\tTotal: {hand.format_total()}")
-            print(f"\tWager: ${hand.wager}")
-            if hand.insurance != 0:
-                print(f"\tInsurance: ${hand.insurance}")
+            hand.print(hand_number=i+1)
 
     def play(self):
 

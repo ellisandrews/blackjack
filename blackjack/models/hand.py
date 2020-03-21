@@ -48,7 +48,7 @@ class Hand:
         """Get the number of Aces in the hand."""
         num_aces = 0
         for card in self.cards():
-            if card.name == 'Ace':
+            if card.is_ace():
                 num_aces += 1
         return num_aces
 
@@ -90,12 +90,37 @@ class Hand:
         card.hand = self
 
 
+class DealerHand(Hand):
+
+    def up_card(self):
+        return self.cards()[0]
+
+    def print(self, hide=False):
+        print(f"Hand:")
+        if hide:
+            up_card = self.up_card()
+            print(f"\tUpcard: {up_card}")
+            print(f"\tTotal: {up_card.value if up_card.name != 'Ace' else '1 or 11'}")
+        else:
+            print(f"\tCards: {self}")
+            print(f"\tTotal: {self.format_total()}")
+
+
 class GamblerHand(Hand):
 
     def __init__(self, player, wager=0, insurance=0):
         super().__init__(player)
         self.wager = wager
         self.insurance = insurance
+
+    def print(self, hand_number=1):
+        # TODO: Print outcome of hand and/or insurance? (e.g. win/loss/push)?
+        print(f"\nHand {hand_number}:")
+        print(f"\tCards: {self}")
+        print(f"\tTotal: {self.format_total()}")
+        print(f"\tWager: ${self.wager}")
+        if self.insurance != 0:
+            print(f"\tInsurance: ${self.insurance}")
 
     def payout(self, kind, odds=None):
         

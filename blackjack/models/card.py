@@ -34,3 +34,9 @@ class Card:
 
     def __repr__(self):
         return self.__str__()
+
+    def is_ace(self):
+        return self.name == 'Ace'
+    
+    def is_facecard(self):
+        return self.value == 10

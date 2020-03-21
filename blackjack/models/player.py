@@ -194,10 +194,11 @@ class Dealer(Player):
         return self.hands()[0]
 
     def up_card(self):
-        return self.hand().cards()[0]
+        # Shortcut to the dealer's hand's up_card
+        return self.hand().up_card()
 
     def is_showing_ace(self):
-        return self.up_card().name == 'Ace'
+        return self.up_card().is_ace()
 
     def is_showing_face_card(self):
-        return self.up_card().value == 10
+        return self.up_card().is_facecard()

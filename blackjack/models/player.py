@@ -1,10 +1,7 @@
-from collections import OrderedDict
-from functools import partial
-
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import Hand
 from blackjack.models.table import Table
-from blackjack.utils import choice_response, float_response, get_user_input, max_retries_exit, yes_no_response
+from blackjack.utils import float_response, get_user_input, max_retries_exit, yes_no_response
 
 
 class Player:
@@ -131,55 +128,10 @@ class Gambler(Player):
     def wants_insurance():
         return get_user_input("Insurance? (y/n) => ", yes_no_response)
 
-    def play_hand(self, hand):
-        """Play a hand."""
-
-        while not (hand.is_21() or hand.is_busted()):
-
-            # Default turn options
-            options = OrderedDict([('h', 'hit'), ('s', 'stand'), ('d', 'double')])
-
-            # Add the option to split if applicable
-            if hand.is_splittable():
-                options['x'] = 'split'
-
-            display_options = [f"{option} ({abbreviation})" for abbreviation, option in options.items()]
-
-            response = get_user_input(
-                f"What would you like to do?\n[ {' , '.join(display_options)} ] => ",
-                partial(choice_response, choices=options.keys())
-            )
-
-            action = options[response]
-
-            if action == 'hit':
-                # Deal another card and re-run loop
-                print('Hitting...')
-                hand.hit()
-            elif action == 'stand':
-                print('Stood.')
-                break
-            elif action == 'double':
-                print('Doubling...')
-                hand.hit()
-                break
-            elif action == 'split':
-                # Check if the user has enough bankroll to split
-                # Split cards into their own hands
-                # Add another wager equal to the first
-                # If the card is an Ace, they only get 1 more card on each hand
-                # If not, run loop for each hand
-                # TODO!
-                print('Splitting...')
-                pass
-            else:
-                raise Exception('Unhandled response.')
-
     def play_turn(self):
         """Play the gambler's turn"""
         for hand in self.hands():
-            self.play_hand(hand)
-
+            hand.play()
 
 class Dealer(Player):
 

@@ -161,13 +161,13 @@ class Table:
     def print(self, hide_dealer=False):
         
         # Print the dealer. If `hide_dealer` is True, don't factor in the dealer's buried card.
-        print(f"\n{'-'*12}\n   DEALER   \n{'-'*12}\n")
+        num_dashes = len(self.dealer.name) + 6
+        print(f"\n{'-'*12}\n   {self.dealer.name.upper()}   \n{'-'*12}\n")
         self.dealer.hand().print(hide=hide_dealer)
 
-        # Print the gambler header
-        print(f"\n{'-'*12}\n   {self.gambler.name.upper()}   \n{'-'*12}")
-        
-        # Print the gambler's data
+        # Print the gambler
+        num_dashes = len(self.gambler.name) + 6
+        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}")
         for i, hand in enumerate(self.gambler.hands()):
             hand.print(hand_number=i+1)
 

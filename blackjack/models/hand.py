@@ -1,4 +1,8 @@
+from collections import OrderedDict
+from functools import partial
+
 from blackjack.models.card import Card
+from blackjack.utils import choice_response, get_user_input
 
 
 class Hand:
@@ -121,6 +125,52 @@ class GamblerHand(Hand):
         print(f"\tWager: ${self.wager}")
         if self.insurance != 0:
             print(f"\tInsurance: ${self.insurance}")
+
+    def play(self):
+        """Play the hand."""
+        while not (self.is_21() or self.is_busted()):
+
+            # Default turn options
+            options = OrderedDict([('h', 'hit'), ('s', 'stand'), ('d', 'double')])
+
+            # Add the option to split if applicable
+            if self.is_splittable():
+                options['x'] = 'split'
+
+            # Formatted options to display to the user
+            display_options = [f"{option} ({abbreviation})" for abbreviation, option in options.items()]
+
+            # Ask what the user would like to do, given their options
+            response = get_user_input(
+                f"What would you like to do?\n[ {' , '.join(display_options)} ] => ",
+                partial(choice_response, choices=options.keys())
+            )
+
+            action = options[response]
+
+            if action == 'hit':
+                # Deal another card and re-run loop
+                print('Hitting...')
+                self.hit()
+            elif action == 'stand':
+                print('Stood.')
+                break
+            elif action == 'double':
+                # TODO: Check if the user has enough bankroll to double
+                print('Doubling...')
+                self.hit()
+                break
+            elif action == 'split':
+                # TODO: Check if the user has enough bankroll to split
+                # Split cards into their own hands
+                # Add another wager equal to the first
+                # If the card is an Ace, they only get 1 more card on each hand
+                # If not, run loop for each hand
+                # TODO!
+                print('Splitting...')
+                pass
+            else:
+                raise Exception('Unhandled response.')
 
     def payout(self, kind, odds=None):
         

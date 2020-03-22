@@ -47,9 +47,7 @@ class Table:
         self.gambler.place_auto_wager()
 
         # Deal like they do a casinos -- one card to each player at a time, starting with the gambler.
-        print()
-        print("Dealing...")
-        print()
+        print("\nDealing...")
         dealt_card_1, dealt_card_2, dealt_card_3, dealt_card_4 = self.shoe.deal_n_cards(4)
         dealt_card_1.hand, dealt_card_3.hand = gambler_hand, gambler_hand
         dealt_card_2.hand, dealt_card_4.hand = dealer_hand, dealer_hand
@@ -144,10 +142,12 @@ class Table:
                     # The turn is over no matter what if the dealer has blackjack
                     return 'turn over'
 
-                # If dealer doesn't have blackjack, continue with playing the hand.
+                # If dealer doesn't have blackjack, the player wins.
                 else:
                     print('Dealer DOES NOT HAVE BLACKJACK.')
-                    return 'play turn'
+                    print(f"{self.gambler.name} wins 3:2.")
+                    self.gambler.first_hand().payout('wager', '3:2')
+                    return 'turn over'
 
         # If the dealer's upcard is not an ace or a face card, they cannot have blackjack.
         # If the player has blackjack here, payout 3:2 and the hand is over. Otherwise, continue with playing the hand.
@@ -205,6 +205,10 @@ class Table:
             self.gambler.play_turn()
 
             print()
+
+            self.print(hide_dealer=False)
+
+            input('Push Enter to proceed => ')
 
             # Play the Dealer's turn
 

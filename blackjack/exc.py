@@ -4,5 +4,10 @@ class Error(Exception):
 
 
 class InsufficientBankrollError(Error):
-    """Custom exception to raise when attempting to withdraw more than a player's bankroll."""
+    """Custom exception to raise when attempting to use more funds than are in player's bankroll."""
+    pass
+
+
+class OverdraftError(Error):
+    """Custom exception to raise when a player's bankroll attempts to go below zero."""
     pass

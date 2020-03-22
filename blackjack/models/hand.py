@@ -158,6 +158,7 @@ class GamblerHand(Hand):
             if len(self.cards()) == 1:
                 self.hit()
                 if self.cards()[0].is_ace():
+                    self.print()  # Print the final hand.
                     break
 
             # Get the user's action from input
@@ -172,8 +173,9 @@ class GamblerHand(Hand):
                 break
 
             elif action == 'Double':
-                print('Doubling...')   # Deal another card, hand is played.
+                print('Doubling...')   # Deal another card and print. Hand is played.
                 self.hit()
+                self.print()
                 break
 
             elif action == 'Split':
@@ -191,8 +193,7 @@ class GamblerHand(Hand):
             elif self.is_busted():
                 print('Busted!')
         
-        # Print the final hand, and mark it as played
-        self.print()
+        # Mark the hand as played
         self.played = True  
 
     def split(self):

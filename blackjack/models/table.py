@@ -59,7 +59,7 @@ class Table:
     def play_pre_turn(self):
         """
         Carry out pre-turn flow for blackjacks, insurance, etc.
-        TODO: Refactor into smaller pieces!
+        TODO: Refactor into smaller pieces! Not 100% DRY either right now.
         """
         # Check if the gambler has blackjack
         gambler_has_blackjack = self.gambler.first_hand().is_blackjack()
@@ -133,21 +133,27 @@ class Table:
                 # If the dealer has blackjack, it's a push if the player also has blackjack. Otherwise, the player loses.
                 if dealer_has_blackjack:
 
+                    print('Dealer HAS BLACKJACK.')
+
                     if gambler_has_blackjack:
-                        print('Dealer HAS BLACKJACK. Hand is a push.')
+                        print('Hand is a push.')
                         self.gambler.first_hand().payout('push')  
                     else:
-                        print(f"Dealer HAS BLACKJACK. {self.gambler.name} loses the hand.")
+                        print(f"{self.gambler.name} loses the hand.")
                         
                     # The turn is over no matter what if the dealer has blackjack
                     return 'turn over'
 
-                # If dealer doesn't have blackjack, the player wins.
+                # If dealer doesn't have blackjack, the player wins if they have blackjack. Otherwise, play the turn.
                 else:
                     print('Dealer DOES NOT HAVE BLACKJACK.')
-                    print(f"{self.gambler.name} wins 3:2.")
-                    self.gambler.first_hand().payout('wager', '3:2')
-                    return 'turn over'
+                    
+                    if gambler_has_blackjack:
+                        print(f"{self.gambler.name} wins 3:2.")
+                        self.gambler.first_hand().payout('wager', '3:2')
+                        return 'turn over'
+                    else:
+                        return 'play turn'
 
         # If the dealer's upcard is not an ace or a face card, they cannot have blackjack.
         # If the player has blackjack here, payout 3:2 and the hand is over. Otherwise, continue with playing the hand.
@@ -206,14 +212,14 @@ class Table:
 
             print()
 
-            self.print(hide_dealer=False)
-
-            input('Push Enter to proceed => ')
-
             # Play the Dealer's turn
 
             # Pay out wins / collect losses
 
         finally:
+
+            # TODO: Delete! just stopping execution while testing.
+            input('Push Enter to proceed => ')
+
             # Always reset all hands
             self.discard_hands()

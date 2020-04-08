@@ -1,2 +1,8 @@
 # blackjack
-Blackjack game
+A complete blackjack CLI game in pure python.
+
+<br>
+
+<p align="center">
+  <img src="./table.png" width="400">
+</p>

@@ -173,9 +173,9 @@ class Table:
 
         # Print the gambler
         num_dashes = len(self.gambler.name) + 6
-        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}")
-        for i, hand in enumerate(self.gambler.hands()):
-            hand.print(hand_number=i+1)
+        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}")
+        for hand in self.gambler.hands():
+            hand.print()
 
     def play(self):
 

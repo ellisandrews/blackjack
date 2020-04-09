@@ -96,14 +96,15 @@ class Hand:
 
 class GamblerHand(Hand):
 
-    def __init__(self, player, cards=None, wager=0, insurance=0):
+    def __init__(self, player, cards=None, wager=0, insurance=0, hand_number=1):
         super().__init__(player, cards)
         self.wager = wager
         self.insurance = insurance
+        self.hand_number = hand_number
 
-    def print(self, hand_number=1):
+    def print(self):
         # TODO: Print outcome of hand and/or insurance? (e.g. win/loss/push)?
-        print(f"\nHand {hand_number}:")
+        print(f"\nHand {self.hand_number}:")
         print(f"\tCards: {self}")
         print(f"\tTotal: {self.format_total()}")
         print(f"\tWager: ${self.wager}")
@@ -145,14 +146,14 @@ class GamblerHand(Hand):
 
         # Ask what the user would like to do, given their options
         response = get_user_input(
-            f"What would you like to do?\n[ {' , '.join(display_options)} ] => ",
+            f"[ Hand {self.hand_number} ] What would you like to do? [ {' , '.join(display_options)} ] => ",
             partial(choice_response, choices=options.keys())
         )
 
         # Return the user's selection ('hit', 'stand', etc.)
         return options[response]
 
-    def play(self, hand_number):
+    def play(self):
         """Play the hand."""
 
         while not self.played:
@@ -161,7 +162,7 @@ class GamblerHand(Hand):
             if len(self.cards) == 1:
                 print('Adding second card to split hand...')
                 self.hit()
-                self.print(hand_number)
+                self.print()
 
                 # Split Aces only get 1 more card.
                 if self.cards[0].is_ace():
@@ -193,7 +194,7 @@ class GamblerHand(Hand):
                 raise Exception('Unhandled response.')
 
             # Print the hand after the action
-            self.print(hand_number)
+            self.print()
 
             # If the hand is 21 or busted, the hand is done being played.
             if self.is_21():
@@ -205,9 +206,9 @@ class GamblerHand(Hand):
 
     def split(self):
         """Split the current hand."""
-        split_card = self.cards.pop(1)                           # Pop the second card off the hand
-        new_hand = GamblerHand(self.player, cards=[split_card])  # Make a new hand with only the second card
-        self.player.place_hand_wager(self.wager, new_hand)       # Place the same wager on the new hand
+        split_card = self.cards.pop(1)  # Pop the second card off the hand to make a new hand
+        new_hand = GamblerHand(self.player, cards=[split_card], hand_number=self.hand_number + 1)
+        self.player.place_hand_wager(self.wager, new_hand)  # Place the same wager on the new hand
 
     def payout(self, kind, odds=None):
         

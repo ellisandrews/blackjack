@@ -39,19 +39,18 @@ class Table:
             self.gambler.set_new_auto_wager_from_input()
 
     def deal(self):
-        # Create the two hands to be dealt to
-        gambler_hand = GamblerHand(self.gambler)
-        dealer_hand = DealerHand(self.dealer)
+        # Deal 4 cards from the shoe
+        print("\nDealing...")
+        card_1, card_2, card_3, card_4 = self.shoe.deal_n_cards(4)
+
+        # Create the Hands from the dealt cards.
+        # Deal like they do a casinos --> one card to each player at a time, starting with the gambler.
+        GamblerHand(self.gambler, cards=[card_1, card_3])
+        DealerHand(self.dealer, cards=[card_2, card_4])
 
         # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
         self.gambler.place_auto_wager()
 
-        # Deal like they do a casinos -- one card to each player at a time, starting with the gambler.
-        print("\nDealing...")
-        dealt_card_1, dealt_card_2, dealt_card_3, dealt_card_4 = self.shoe.deal_n_cards(4)
-        dealt_card_1.hand, dealt_card_3.hand = gambler_hand, gambler_hand
-        dealt_card_2.hand, dealt_card_4.hand = dealer_hand, dealer_hand
- 
     def discard_hands(self):
         self.gambler.discard_hands()
         self.dealer.discard_hands()

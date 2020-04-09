@@ -19,12 +19,11 @@ class Card:
         ('King', 10)
     ]
 
-    def __init__(self, suit, name, value, deck=None, hand=None):
+    def __init__(self, suit, name, value, deck=None):
         self.suit = suit
         self.name = name
         self.value = value
         self.deck = deck
-        self.hand = hand
         
         Card.all_.append(self)
 

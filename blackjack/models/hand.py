@@ -9,20 +9,18 @@ class Hand:
 
     all_ = []
 
-    def __init__(self, player):
+    def __init__(self, player, cards=None):
         self.player = player
+        self.cards = cards or []  # Card order matters, so we'll store cards in a list
         self.played = False  # Hands are start out as unplayed
 
         Hand.all_.append(self)
 
     def __str__(self):
-        return ' | '.join(str(card) for card in self.cards())
+        return ' | '.join(str(card) for card in self.cards)
 
     def __repr__(self):
         return self.__str__()
-
-    def cards(self):
-        return [card for card in Card.all_ if card.hand == self]
 
     def possible_totals(self):
         """Sum the cards in the hand. Return 2 totals, due to the dual value of Aces."""
@@ -30,7 +28,7 @@ class Hand:
         num_aces = self.get_num_aces_in_hand()
         
         # Get the total for all non-ace cards first, as this is constant
-        non_ace_total = sum(card.value for card in self.cards() if card.name != 'Ace')
+        non_ace_total = sum(card.value for card in self.cards if card.name != 'Ace')
 
         # If there are no aces in the hand, there is only one possible total. Return it.
         if num_aces == 0:
@@ -53,7 +51,7 @@ class Hand:
     def get_num_aces_in_hand(self):
         """Get the number of Aces in the hand."""
         num_aces = 0
-        for card in self.cards():
+        for card in self.cards:
             if card.is_ace():
                 num_aces += 1
         return num_aces
@@ -83,7 +81,7 @@ class Hand:
     def is_blackjack(self):
         """Check whether the hand is blackjack."""
         _, high_total = self.possible_totals()
-        return high_total == 21 and len(self.cards()) == 2
+        return high_total == 21 and len(self.cards) == 2
 
     def is_busted(self):
         """Check whether the hand is busted."""
@@ -93,13 +91,13 @@ class Hand:
     def hit(self):
         """Add a card to the hand from the player's table's shoe."""
         card = self.player.table().shoe.deal_card()
-        card.hand = self
+        self.cards.append(card)
 
 
 class GamblerHand(Hand):
 
-    def __init__(self, player, wager=0, insurance=0):
-        super().__init__(player)
+    def __init__(self, player, cards=None, wager=0, insurance=0):
+        super().__init__(player, cards)
         self.wager = wager
         self.insurance = insurance
 
@@ -118,8 +116,7 @@ class GamblerHand(Hand):
         2) The name of the two cards matches (e.g. King-King, Five-Five, etc.)
         3) The Player has sufficient bankroll to split.
         """
-        cards = self.cards()
-        return len(cards) == 2 and cards[0].name == cards[1].name and self.player.bankroll >= self.wager
+        return len(self.cards) == 2 and self.cards[0].name == self.cards[1].name and self.player.bankroll >= self.wager
 
     def is_doubleable(self):
         """
@@ -128,7 +125,7 @@ class GamblerHand(Hand):
         1) Hand is made up of two cards.
         2) The Player has sufficient bankroll to double.
         """
-        return len(self.cards()) == 2 and self.player.bankroll >= self.wager
+        return len(self.cards) == 2 and self.player.bankroll >= self.wager
 
     def get_user_action(self):
         """List action options for the user on the hand, and get their choice."""
@@ -161,14 +158,13 @@ class GamblerHand(Hand):
         while not self.played:
 
             # If the hand resulted from splitting, hit it automatically.
-            if len(self.cards()) == 1:
-                first_card = self.cards()[0]  # TODO: Refactor once hand card order has been fixed.
+            if len(self.cards) == 1:
                 print('Adding second card to split hand...')
                 self.hit()
                 self.print(hand_number)
 
                 # Split Aces only get 1 more card.
-                if first_card.is_ace():
+                if self.cards[0].is_ace():
                     self.played = True
                     break
 
@@ -209,9 +205,9 @@ class GamblerHand(Hand):
 
     def split(self):
         """Split the current hand."""
-        new_hand = GamblerHand(self.player)  # Make a new GamblerHand associated with this hand's gambler
-        self.cards()[1].hand = new_hand  # Re-assign the second card in this hand to the new hand
-        self.player.place_hand_wager(self.wager, new_hand)  # Place the same wager on the new hand
+        split_card = self.cards.pop(1)                           # Pop the second card off the hand
+        new_hand = GamblerHand(self.player, cards=[split_card])  # Make a new hand with only the second card
+        self.player.place_hand_wager(self.wager, new_hand)       # Place the same wager on the new hand
 
     def payout(self, kind, odds=None):
         
@@ -266,7 +262,7 @@ class GamblerHand(Hand):
 class DealerHand(Hand):
 
     def up_card(self):
-        return self.cards()[0]
+        return self.cards[0]
 
     def print(self, hide=False):
         print(f"Hand:")

@@ -150,10 +150,14 @@ class Gambler(Player):
 
     def play_turn(self):
         """Play the gambler's turn"""
+        # TODO: Come up with a more elegant way of tracking player hand numbers?
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
+        hand_number = 1
         while not all(hand.played for hand in self.hands()):
             hand = next(hand for hand in self.hands() if not hand.played)  # Grab the next unplayed hand
-            hand.play()  # Play the hand
+            hand.play(hand_number=hand_number)  # Play the hand
+            hand_number += 1
+            print('\n\n**********\n\n')
 
 
 class Dealer(Player):

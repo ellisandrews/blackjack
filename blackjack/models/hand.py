@@ -11,6 +11,8 @@ class Hand:
 
     def __init__(self, player):
         self.player = player
+        self.played = False  # Hands are start out as unplayed
+
         Hand.all_.append(self)
 
     def __str__(self):
@@ -68,6 +70,11 @@ class Hand:
         else:
             return f"{low_total}"
 
+    def final_total(self):
+        """Get the singular hand total for determining the outcome (high total if it exists, otherwise low total)."""
+        low_total, high_total = self.possible_totals()
+        return high_total or low_total
+
     def is_21(self):
         """Check if the hand totals to 21."""
         low_total, high_total = self.possible_totals()
@@ -95,7 +102,6 @@ class GamblerHand(Hand):
         super().__init__(player)
         self.wager = wager
         self.insurance = insurance
-        self.played = False
 
     def print(self, hand_number=1):
         # TODO: Print outcome of hand and/or insurance? (e.g. win/loss/push)?
@@ -149,16 +155,21 @@ class GamblerHand(Hand):
         # Return the user's selection ('hit', 'stand', etc.)
         return options[response]
 
-    def play(self):
+    def play(self, hand_number):
         """Play the hand."""
 
-        while not (self.is_21() or self.is_busted()):
+        while not self.played:
 
-            # If the hand resulted from splitting, hit it automatically. Split Aces only get 1 more card.
+            # If the hand resulted from splitting, hit it automatically.
             if len(self.cards()) == 1:
+                first_card = self.cards()[0]  # TODO: Refactor once hand card order has been fixed.
+                print('Adding second card to split hand...')
                 self.hit()
-                if self.cards()[0].is_ace():
-                    self.print()  # Print the final hand.
+                self.print(hand_number)
+
+                # Split Aces only get 1 more card.
+                if first_card.is_ace():
+                    self.played = True
                     break
 
             # Get the user's action from input
@@ -170,31 +181,31 @@ class GamblerHand(Hand):
 
             elif action == 'Stand':
                 print('Stood.')        # Do nothing, hand is played.
-                break
+                self.played = True
 
             elif action == 'Double':
                 print('Doubling...')   # Deal another card and print. Hand is played.
                 self.hit()
-                self.print()
-                break
+                self.played = True
 
             elif action == 'Split':
-                # TODO: If the cards are Aces, they only get 1 more card on each hand
                 print('Splitting...')  # Put second card into a new hand, keep playing this hand 
                 self.split()
+                continue
 
             else:
                 raise Exception('Unhandled response.')
 
-            self.print()
+            # Print the hand after the action
+            self.print(hand_number)
 
+            # If the hand is 21 or busted, the hand is done being played.
             if self.is_21():
                 print('21!')
+                self.played = True
             elif self.is_busted():
                 print('Busted!')
-        
-        # Mark the hand as played
-        self.played = True  
+                self.played = True
 
     def split(self):
         """Split the current hand."""

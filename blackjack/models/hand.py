@@ -101,6 +101,11 @@ class GamblerHand(Hand):
         self.wager = wager
         self.insurance = insurance
         self.hand_number = hand_number
+        
+        if self.is_blackjack():
+            self.status = 'Blackjack'
+        else:
+            self.status = 'Pending'
 
     def print(self):
         # TODO: Print outcome of hand and/or insurance? (e.g. win/loss/push)?
@@ -108,6 +113,7 @@ class GamblerHand(Hand):
         print(f"\tCards: {self}")
         print(f"\tTotal: {self.format_total()}")
         print(f"\tWager: ${self.wager}")
+        print(f"\tStatus: {self.status}")
 
     def is_splittable(self):
         """
@@ -146,7 +152,7 @@ class GamblerHand(Hand):
 
         # Ask what the user would like to do, given their options
         response = get_user_input(
-            f"[ Hand {self.hand_number} ] What would you like to do? [ {' , '.join(display_options)} ] => ",
+            f"\n[ Hand {self.hand_number} ] What would you like to do? [ {' , '.join(display_options)} ] => ",
             partial(choice_response, choices=options.keys())
         )
 
@@ -156,18 +162,25 @@ class GamblerHand(Hand):
     def play(self):
         """Play the hand."""
 
-        while not self.played:
+        self.status = 'Playing'
+
+        while self.status == 'Playing':
 
             # If the hand resulted from splitting, hit it automatically.
             if len(self.cards) == 1:
                 print('Adding second card to split hand...')
                 self.hit()
-                self.print()
 
                 # Split Aces only get 1 more card.
                 if self.cards[0].is_ace():
-                    self.played = True
+                    if self.is_blackjack():
+                        self.status = 'Blackjack'
+                    else:
+                        self.status = 'Stood'
                     break
+
+            # Print a fresh screen for ease of user decision making
+            self.player.table().print()
 
             # Get the user's action from input
             action = self.get_user_action()
@@ -178,12 +191,12 @@ class GamblerHand(Hand):
 
             elif action == 'Stand':
                 print('Stood.')        # Do nothing, hand is played.
-                self.played = True
+                self.status = 'Stood'
 
             elif action == 'Double':
                 print('Doubling...')   # Deal another card and print. Hand is played.
                 self.hit()
-                self.played = True
+                self.status = 'Doubled'
 
             elif action == 'Split':
                 print('Splitting...')  # Put second card into a new hand, keep playing this hand 
@@ -193,16 +206,13 @@ class GamblerHand(Hand):
             else:
                 raise Exception('Unhandled response.')
 
-            # Print the hand after the action
-            self.print()
-
             # If the hand is 21 or busted, the hand is done being played.
             if self.is_21():
                 print('21!')
-                self.played = True
+                self.status = 'Stood'
             elif self.is_busted():
                 print('Busted!')
-                self.played = True
+                self.status = 'Busted'
 
     def split(self):
         """Split the current hand."""

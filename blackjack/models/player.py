@@ -151,10 +151,10 @@ class Gambler(Player):
     def play_turn(self):
         """Play the gambler's turn"""
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
-        while not all(hand.played for hand in self.hands()):
-            hand = next(hand for hand in self.hands() if not hand.played)  # Grab the next unplayed hand
+        while any(hand.status == 'Pending' for hand in self.hands()):
+            hand = next(hand for hand in self.hands() if hand.status == 'Pending')  # Grab the next unplayed hand
             hand.play()  # Play the hand
-            print('\n\n**********\n\n')
+            self.table().print()
 
 
 class Dealer(Player):

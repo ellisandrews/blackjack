@@ -164,8 +164,12 @@ class Table:
             else:
                 return 'play turn'
 
-    def print(self, hide_dealer=False):
+    def print(self, hide_dealer=True, clear_screen=True):
         
+        # Clear the terminal screen of other output if desired
+        if clear_screen:
+            clear()
+
         # Print the dealer. If `hide_dealer` is True, don't factor in the dealer's buried card.
         num_dashes = len(self.dealer.name) + 6
         print(f"\n{'-'*12}\n   {self.dealer.name.upper()}   \n{'-'*12}\n")
@@ -193,8 +197,8 @@ class Table:
             # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
             self.deal()
 
-            # Print the table, hiding the dealer's buried card from the gambler
-            self.print(hide_dealer=True)
+            # Print the table, clearing the screen first and hiding the dealer's buried card from the gambler
+            self.print()
 
             print()
 

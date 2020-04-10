@@ -217,7 +217,7 @@ class GamblerHand(Hand):
     def split(self):
         """Split the current hand."""
         split_card = self.cards.pop(1)  # Pop the second card off the hand to make a new hand
-        new_hand = GamblerHand(self.player, cards=[split_card], hand_number=self.hand_number + 1)
+        new_hand = GamblerHand(self.player, cards=[split_card], hand_number=len(self.player.hands())+1)
         self.player.place_hand_wager(self.wager, new_hand)  # Place the same wager on the new hand
 
     def payout(self, kind, odds=None):

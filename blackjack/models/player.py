@@ -178,3 +178,7 @@ class Dealer(Player):
 
     def is_showing_face_card(self):
         return self.up_card().is_facecard()
+
+    def play_turn(self):
+        self.hand().play()
+        self.table().print()

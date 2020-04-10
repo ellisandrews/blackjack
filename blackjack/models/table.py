@@ -216,6 +216,7 @@ class Table:
             print()
 
             # Play the Dealer's turn
+            self.dealer.play_turn()
 
             # Pay out wins / collect losses
 

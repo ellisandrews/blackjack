@@ -284,3 +284,6 @@ class DealerHand(Hand):
         else:
             print(f"\tCards: {self}")
             print(f"\tTotal: {self.format_total()}")
+
+    def play(self):
+        pass

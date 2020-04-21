@@ -174,6 +174,9 @@ class Gambler(Player):
             hand = next(hand for hand in self.hands() if hand.status == 'Pending')  # Grab the next unplayed hand
             hand.play(shoe)  # Play the hand
             self.table().print()
+        
+        # Return True if the dealer's hand needs to be played, False otherwise
+        return any(hand.status in ('Doubled', 'Stood') for hand in self.hands())
 
     def settle_up(self, dealer_hand):
         print('\nSetting up...')
@@ -205,4 +208,3 @@ class Dealer(Player):
 
     def play_turn(self, shoe):
         self.hand().play(shoe)
-        self.table().print(hide_dealer=False)

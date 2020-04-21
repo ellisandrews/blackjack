@@ -314,6 +314,7 @@ class DealerHand(Hand):
 
             # Print a fresh screen so the user can see the dealer's buried card
             self.player.table().print(hide_dealer=False)
+            sleep(2)
 
             # Get the hand total
             total = self.final_total()
@@ -334,5 +335,3 @@ class DealerHand(Hand):
             if self.is_busted():
                 print('Busted!')
                 self.status = 'Busted'
-            else:
-                sleep(2)

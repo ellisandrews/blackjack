@@ -148,6 +148,25 @@ class Gambler(Player):
     def wants_insurance():
         return get_user_input("Insurance? (y/n) => ", yes_no_response)
 
+    def check_wager(self):
+        # Check if the gambler still has sufficient bankroll to place the auto-wager
+        if self.can_place_auto_wager():
+
+            # Ask if the gambler wants to cash out or change their auto-wager
+            response = get_user_input(
+                f"{self.name}, change your auto-wager or cash out? (Bankroll: ${self.bankroll}; Auto-Wager: ${self.auto_wager}) (y/n) => ", 
+                yes_no_response
+            )
+            
+            # If they want to make a change, make it
+            if response == 'yes':
+                self.set_new_auto_wager_from_input()
+
+        # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
+        else:
+            print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.bankroll}; Auto-Wager: ${self.auto_wager})")
+            self.set_new_auto_wager_from_input()
+
     def play_turn(self):
         """Play the gambler's turn"""
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)

@@ -18,26 +18,6 @@ class Table:
         Table.counter += 1
         Table.all_.append(self)
 
-    def check_gambler_wager(self):
-
-        # Check if the gambler still has sufficient bankroll to place the auto-wager
-        if self.gambler.can_place_auto_wager():
-
-            # Ask if the gambler wants to cash out or change their auto-wager
-            response = get_user_input(
-                f"{self.gambler.name}, change your auto-wager or cash out? (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager}) (y/n) => ", 
-                yes_no_response
-            )
-            
-            # If they want to make a change, make it
-            if response == 'yes':
-                self.gambler.set_new_auto_wager_from_input()
-
-        # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
-        else:
-            print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager})")
-            self.gambler.set_new_auto_wager_from_input()
-
     def deal(self):
         # Deal 4 cards from the shoe
         print("\nDealing...")
@@ -188,7 +168,7 @@ class Table:
             print('\n--- New Turn ---\n')
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
-            self.check_gambler_wager()
+            self.gambler.check_wager()
             
             # If they cash out, don't play the turn.
             if self.gambler.is_finished():

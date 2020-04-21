@@ -181,4 +181,4 @@ class Dealer(Player):
 
     def play_turn(self):
         self.hand().play()
-        self.table().print()
+        self.table().print(hide_dealer=False)

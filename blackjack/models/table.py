@@ -223,6 +223,7 @@ class Table:
         finally:
 
             # TODO: Delete! just stopping execution while testing.
+            print()
             input('Push Enter to proceed => ')
 
             # Always reset all hands

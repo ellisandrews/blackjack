@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from functools import partial
+from time import sleep
 
 from blackjack.models.card import Card
 from blackjack.user_input import choice_response, get_user_input
@@ -9,10 +10,10 @@ class Hand:
 
     all_ = []
 
-    def __init__(self, player, cards=None):
+    def __init__(self, player, cards=None, status='Pending'):
         self.player = player
         self.cards = cards or []  # Card order matters, so we'll store cards in a list
-        self.played = False  # Hands are start out as unplayed
+        self.status = status      # Hands are initialized as 'Pending' by default (will be updated as they are played)
 
         Hand.all_.append(self)
 
@@ -56,7 +57,7 @@ class Hand:
                 num_aces += 1
         return num_aces
 
-    def format_total(self):
+    def format_possible_totals(self):
         # Get possible hand total(s) to display
         low_total, high_total = self.possible_totals()
 
@@ -73,20 +74,29 @@ class Hand:
         low_total, high_total = self.possible_totals()
         return high_total or low_total
 
+    def get_total_to_display(self):
+        # If hand is still active, allow for multiple totals to be displayed. Otherwise, display the single final total.
+        if self.status in ('Pending', 'Playing'):
+            return self.format_possible_totals()
+        else:
+            return self.final_total()
+
     def is_21(self):
         """Check if the hand totals to 21."""
-        low_total, high_total = self.possible_totals()
-        return low_total == 21 or high_total == 21
+        return self.final_total() == 21
 
     def is_blackjack(self):
         """Check whether the hand is blackjack."""
-        _, high_total = self.possible_totals()
-        return high_total == 21 and len(self.cards) == 2
+        return self.is_21() and len(self.cards) == 2
 
     def is_busted(self):
         """Check whether the hand is busted."""
-        low_total, _ = self.possible_totals()
-        return low_total > 21
+        return self.final_total() > 21
+
+    def is_soft(self):
+        """Check whether a hand is 'soft', meaning has an Ace counted as 11."""
+        _, high_total = self.possible_totals()
+        return bool(high_total)
 
     def hit(self):
         """Add a card to the hand from the player's table's shoe."""
@@ -96,24 +106,26 @@ class Hand:
 
 class GamblerHand(Hand):
 
-    def __init__(self, player, cards=None, wager=0, insurance=0, hand_number=1):
-        super().__init__(player, cards)
+    def __init__(self, player, cards=None, status='Pending', wager=0, insurance=0, hand_number=1):
+        super().__init__(player, cards, status)
         self.wager = wager
         self.insurance = insurance
         self.hand_number = hand_number
         
         if self.is_blackjack():
             self.status = 'Blackjack'
-        else:
-            self.status = 'Pending'
 
     def print(self):
         # TODO: Print outcome of hand and/or insurance? (e.g. win/loss/push)?
-        print(f"\nHand {self.hand_number}:")
-        print(f"\tCards: {self}")
-        print(f"\tTotal: {self.format_total()}")
-        print(f"\tWager: ${self.wager}")
-        print(f"\tStatus: {self.status}")
+        lines = [
+            f"\nHand {self.hand_number}:",
+            f"Cards: {self}",
+            f"Total: {self.get_total_to_display()}",
+            f"Wager: ${self.wager}",
+            f"Status: {self.status}"
+        ]
+
+        print('\n\t'.join(lines))
 
     def is_splittable(self):
         """
@@ -276,14 +288,51 @@ class DealerHand(Hand):
         return self.cards[0]
 
     def print(self, hide=False):
-        print(f"Hand:")
         if hide:
             up_card = self.up_card()
-            print(f"\tUpcard: {up_card}")
-            print(f"\tTotal: {up_card.value if up_card.name != 'Ace' else '1 or 11'}")
+            cards = f"Upcard: {up_card}"
+            total = f"Total: {up_card.value if up_card.name != 'Ace' else '1 or 11'}"
         else:
-            print(f"\tCards: {self}")
-            print(f"\tTotal: {self.format_total()}")
+            cards = f"Cards: {self}"
+            total = f"Total: {self.get_total_to_display()}"
+
+        lines = [
+            'Hand:',
+            cards,
+            total,
+            f"Status: {self.status}"
+        ]
+
+        print('\n\t'.join(lines))
 
     def play(self):
-        pass
+        # At this point, we've already checked whether the dealer has blackjack (and they do not, otherwise we wouldn't be here)
+        # Start playing the hand
+        self.status = 'Playing'
+
+        while self.status == 'Playing':
+
+            # Print a fresh screen so the user can see the dealer's buried card
+            self.player.table().print(hide_dealer=False)
+
+            # Get the hand total
+            total = self.final_total()
+
+            if total < 17:
+                print('Hitting...')    # Deal another card and keep playing the hand.
+                self.hit()
+
+            elif total == 17 and self.is_soft():
+                    print('Hitting...')  # Dealer must hit a soft 17
+                    self.hit() 
+            
+            else:
+                print('Stood.')
+                self.status = 'Stood'
+
+            # If the hand is busted, it's over. Otherwise, sleep so the user can see the card progression
+            if self.is_busted():
+                print('Busted!')
+                self.status = 'Busted'
+            else:
+                sleep(2)

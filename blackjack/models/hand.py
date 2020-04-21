@@ -281,6 +281,30 @@ class GamblerHand(Hand):
 
         self.player.payout(amount, message)
 
+    def settle_up(self, dealer_hand):
+        print(f"\n[ Hand {self.hand_number} ]")
+
+        if self.status == 'Busted':
+            print('Outcome: LOSS')
+            print(f"${self.wager} hand wager lost.")
+
+        elif dealer_hand.status == 'Busted':
+            print('Outcome: WIN')
+            self.payout('wager', '1:1')
+        else:
+            hand_total = self.final_total()
+            dealer_hand_total = dealer_hand.final_total()
+
+            if hand_total > dealer_hand_total:
+                print('Outcome: WIN')
+                self.payout('wager', '1:1')
+            elif hand_total == dealer_hand_total:
+                print('Outcome: PUSH')
+                self.payout('push')
+            else:
+                print('Outcome: LOSS')
+                print(f"${self.wager} hand wager lost.")
+
 
 class DealerHand(Hand):
 

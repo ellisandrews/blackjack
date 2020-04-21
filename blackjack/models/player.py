@@ -177,31 +177,8 @@ class Gambler(Player):
 
     def settle_up(self, dealer_hand):
         print('\nSetting up...')
-
         for hand in self.hands():
-
-            print(f"\n[ Hand {hand.hand_number} ]")
-
-            if hand.status == 'Busted':
-                print('Outcome: LOSS')
-                print(f"${hand.wager} hand wager lost.")
-
-            elif dealer_hand.status == 'Busted':
-                print('Outcome: WIN')
-                hand.payout('wager', '1:1')
-            else:
-                hand_total = hand.final_total()
-                dealer_hand_total = dealer_hand.final_total()
-
-                if hand_total > dealer_hand_total:
-                    print('Outcome: WIN')
-                    hand.payout('wager', '1:1')
-                elif hand_total == dealer_hand_total:
-                    print('Outcome: PUSH')
-                    hand.payout('push')
-                else:
-                    print('Outcome: LOSS')
-                    print(f"${hand.wager} hand wager lost.")
+            hand.settle_up(dealer_hand)
 
 
 class Dealer(Player):

@@ -116,7 +116,7 @@ class Table:
 
                     if gambler_has_blackjack:
                         print('Hand is a push.')
-                        self.gambler.first_hand().payout('push')  
+                        self.gambler.first_hand().payout('push')
                     else:
                         print(f"{self.gambler.name} loses the hand.")
                         

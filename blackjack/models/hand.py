@@ -142,6 +142,16 @@ class GamblerHand(Hand):
         """
         return len(self.cards) == 2 and self.player.bankroll >= self.wager
 
+    def split(self):
+        """Split the current hand."""
+        split_card = self.cards.pop(1)  # Pop the second card off the hand to make a new hand
+        new_hand = GamblerHand(self.player, cards=[split_card], hand_number=len(self.player.hands())+1)
+        self.player.place_hand_wager(self.wager, new_hand)  # Place the same wager on the new hand
+
+    def double(self, shoe):
+        self.player.place_hand_wager(self.wager, self)  # Double the wager on the hand
+        self.hit(shoe)  # Add another card to the hand from the shoe
+
     def get_user_action(self):
         """List action options for the user on the hand, and get their choice."""
         # Default turn options
@@ -203,7 +213,7 @@ class GamblerHand(Hand):
 
             elif action == 'Double':
                 print('Doubling...')   # Deal another card and print. Hand is played.
-                self.hit(shoe)
+                self.double(shoe)
                 self.status = 'Doubled'
 
             elif action == 'Split':
@@ -221,12 +231,6 @@ class GamblerHand(Hand):
             elif self.is_busted():
                 print('Busted!')
                 self.status = 'Busted'
-
-    def split(self):
-        """Split the current hand."""
-        split_card = self.cards.pop(1)  # Pop the second card off the hand to make a new hand
-        new_hand = GamblerHand(self.player, cards=[split_card], hand_number=len(self.player.hands())+1)
-        self.player.place_hand_wager(self.wager, new_hand)  # Place the same wager on the new hand
 
     def payout(self, kind, odds=None):
         

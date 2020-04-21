@@ -79,10 +79,10 @@ class Gambler(Player):
         return self.can_place_wager(self._insurance_wager_amount())
 
     def place_hand_wager(self, wager, hand):
-        """Place a wager on a hand."""
+        """Place a wager on a hand. Additive so can be used to double down."""
         if self.can_place_wager(wager):
             self._subtract_bankroll(wager)  
-            hand.wager = wager
+            hand.wager += wager
             print(f"${wager} wager placed on hand.")
         else:
             raise InsufficientBankrollError('Insufficient bankroll to place hand wager')    
@@ -176,21 +176,33 @@ class Gambler(Player):
             self.table().print()
 
     def settle_up(self, dealer_hand):
+        print('\nSetting up...')
+
         for hand in self.hands():
+
+            print(f"\n[ Hand {hand.hand_number} ]")
+
             if hand.status == 'Busted':
-                print('LOSS')
+                print('Outcome: LOSS')
+                print(f"${hand.wager} hand wager lost.")
+
             elif dealer_hand.status == 'Busted':
-                print('WIN')
+                print('Outcome: WIN')
+                hand.payout('wager', '1:1')
             else:
                 hand_total = hand.final_total()
                 dealer_hand_total = dealer_hand.final_total()
 
                 if hand_total > dealer_hand_total:
-                    print('WIN')
+                    print('Outcome: WIN')
+                    hand.payout('wager', '1:1')
                 elif hand_total == dealer_hand_total:
-                    print('PUSH')
+                    print('Outcome: PUSH')
+                    hand.payout('push')
                 else:
-                    print('LOSS')
+                    print('Outcome: LOSS')
+                    print(f"${hand.wager} hand wager lost.")
+
 
 class Dealer(Player):
 

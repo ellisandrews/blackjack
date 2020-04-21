@@ -191,14 +191,15 @@ class Table:
                 return
 
             # Play the Gambler's turn
-            self.gambler.play_turn()
+            self.gambler.play_turn(self.shoe)
 
             print()
 
             # Play the Dealer's turn
-            self.dealer.play_turn()
+            self.dealer.play_turn(self.shoe)
 
-            # Pay out wins / collect losses
+            # Settle hand wins and losses
+            self.gambler.settle_up(self.dealer.hand())
 
         finally:
 

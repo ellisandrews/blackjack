@@ -167,14 +167,30 @@ class Gambler(Player):
             print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.bankroll}; Auto-Wager: ${self.auto_wager})")
             self.set_new_auto_wager_from_input()
 
-    def play_turn(self):
+    def play_turn(self, shoe):
         """Play the gambler's turn"""
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
         while any(hand.status == 'Pending' for hand in self.hands()):
             hand = next(hand for hand in self.hands() if hand.status == 'Pending')  # Grab the next unplayed hand
-            hand.play()  # Play the hand
+            hand.play(shoe)  # Play the hand
             self.table().print()
 
+    def settle_up(self, dealer_hand):
+        for hand in self.hands():
+            if hand.status == 'Busted':
+                print('LOSS')
+            elif dealer_hand.status == 'Busted':
+                print('WIN')
+            else:
+                hand_total = hand.final_total()
+                dealer_hand_total = dealer_hand.final_total()
+
+                if hand_total > dealer_hand_total:
+                    print('WIN')
+                elif hand_total == dealer_hand_total:
+                    print('PUSH')
+                else:
+                    print('LOSS')
 
 class Dealer(Player):
 
@@ -198,6 +214,6 @@ class Dealer(Player):
     def is_showing_face_card(self):
         return self.up_card().is_facecard()
 
-    def play_turn(self):
-        self.hand().play()
+    def play_turn(self, shoe):
+        self.hand().play(shoe)
         self.table().print(hide_dealer=False)

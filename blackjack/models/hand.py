@@ -51,11 +51,7 @@ class Hand:
 
     def get_num_aces_in_hand(self):
         """Get the number of Aces in the hand."""
-        num_aces = 0
-        for card in self.cards:
-            if card.is_ace():
-                num_aces += 1
-        return num_aces
+        return sum(1 for card in self.cards if card.is_ace())
 
     def format_possible_totals(self):
         # Get possible hand total(s) to display
@@ -79,7 +75,7 @@ class Hand:
         if self.status in ('Pending', 'Playing'):
             return self.format_possible_totals()
         else:
-            return self.final_total()
+            return str(self.final_total())
 
     def is_21(self):
         """Check if the hand totals to 21."""
@@ -98,9 +94,9 @@ class Hand:
         _, high_total = self.possible_totals()
         return bool(high_total)
 
-    def hit(self):
-        """Add a card to the hand from the player's table's shoe."""
-        card = self.player.table().shoe.deal_card()
+    def hit(self, shoe):
+        """Add a card to the hand from a shoe."""
+        card = shoe.deal_card()
         self.cards.append(card)
 
 
@@ -171,7 +167,7 @@ class GamblerHand(Hand):
         # Return the user's selection ('hit', 'stand', etc.)
         return options[response]
 
-    def play(self):
+    def play(self, shoe):
         """Play the hand."""
 
         self.status = 'Playing'
@@ -181,7 +177,7 @@ class GamblerHand(Hand):
             # If the hand resulted from splitting, hit it automatically.
             if len(self.cards) == 1:
                 print('Adding second card to split hand...')
-                self.hit()
+                self.hit(shoe)
 
                 # Split Aces only get 1 more card.
                 if self.cards[0].is_ace():
@@ -199,7 +195,7 @@ class GamblerHand(Hand):
 
             if action == 'Hit':
                 print('Hitting...')    # Deal another card and keep playing the hand.
-                self.hit()
+                self.hit(shoe)
 
             elif action == 'Stand':
                 print('Stood.')        # Do nothing, hand is played.
@@ -207,7 +203,7 @@ class GamblerHand(Hand):
 
             elif action == 'Double':
                 print('Doubling...')   # Deal another card and print. Hand is played.
-                self.hit()
+                self.hit(shoe)
                 self.status = 'Doubled'
 
             elif action == 'Split':
@@ -305,7 +301,7 @@ class DealerHand(Hand):
 
         print('\n\t'.join(lines))
 
-    def play(self):
+    def play(self, shoe):
         # At this point, we've already checked whether the dealer has blackjack (and they do not, otherwise we wouldn't be here)
         # Start playing the hand
         self.status = 'Playing'
@@ -321,11 +317,11 @@ class DealerHand(Hand):
 
             if total < 17:
                 print('Hitting...')    # Deal another card and keep playing the hand.
-                self.hit()
+                self.hit(shoe)
 
             elif total == 17 and self.is_soft():
                     print('Hitting...')  # Dealer must hit a soft 17
-                    self.hit() 
+                    self.hit(shoe)
             
             else:
                 print('Stood.')

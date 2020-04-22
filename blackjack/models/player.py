@@ -8,8 +8,6 @@ class Player:
 
     all_ = []
 
-    # NOTE: If ever refactoring to allow many Players at a Table, this class should belong to a Table
-    #       (i.e. many to one relationship Player to Table) and thus define a table attribute here.
     def __init__(self, name):
         self.name = name
         Player.all_.append(self)
@@ -21,7 +19,6 @@ class Player:
         return [hand for hand in Hand.all_ if hand.player == self]
 
     def discard_hands(self):
-        # Delete the hand from the single source of truth
         for hand in self.hands():
             Hand.all_.remove(hand)
 
@@ -33,15 +30,16 @@ class Gambler(Player):
         self.bankroll = bankroll
         self.auto_wager = auto_wager
 
-        # Player is finished if they have set their auto_wager to $0 or if they are out of money
-        self.is_finished = lambda: self.auto_wager == 0 or self.bankroll == 0
-
     def __str__(self):
         return super().__str__() + f" | Bankroll: ${self.bankroll}"
 
     def table(self):
         """Get the Table to which the Gambler belongs."""
         return next((table for table in Table.all_ if table.gambler == self), None)
+
+    def is_finished(self):
+        # Player is finished if they've set their wager to $0, or they're out of money
+        return self.auto_wager == 0 or self.bankroll == 0
 
     def first_hand(self):
         # Helper method for action that happens on the initial hand dealt to the gambler

@@ -163,53 +163,55 @@ class Table:
 
     def play(self):
 
-        try:
-            clear()
-            print('\n--- New Turn ---\n')
+        while not self.gambler.is_finished():
 
-            # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
-            self.gambler.check_wager()
-            
-            # If they cash out, don't play the turn.
-            if self.gambler.is_finished():
-                return
+            try:
+                clear()
+                print('\n--- New Turn ---\n')
 
-            # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
-            self.deal()
+                # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
+                self.gambler.check_wager()
 
-            # Print the table, clearing the screen first and hiding the dealer's buried card from the gambler
-            self.print()
+                # If they cash out, don't play the turn.
+                if self.gambler.is_finished():
+                    return
 
-            print()
+                # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
+                self.deal()
 
-            # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
-            result = self.play_pre_turn()
+                # Print the table, clearing the screen first and hiding the dealer's buried card from the gambler
+                self.print()
 
-            print()
+                print()
 
-            if result == 'turn over':
-                return
+                # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
+                result = self.play_pre_turn()
 
-            # Play the Gambler's turn
-            play_dealer_turn = self.gambler.play_turn(self.shoe)
+                print()
 
-            print()
+                if result == 'turn over':
+                    return
 
-            # Play the Dealer's turn if necessary
-            if play_dealer_turn:
-                self.dealer.play_turn(self.shoe)
+                # Play the Gambler's turn
+                play_dealer_turn = self.gambler.play_turn(self.shoe)
 
-            # Print the final table, showing the dealer's cards
-            self.print(hide_dealer=False)
+                print()
 
-            # Settle hand wins and losses
-            self.gambler.settle_up(self.dealer.hand())
+                # Play the Dealer's turn if necessary
+                if play_dealer_turn:
+                    self.dealer.play_turn(self.shoe)
 
-        finally:
+                # Print the final table, showing the dealer's cards
+                self.print(hide_dealer=False)
 
-            # TODO: Delete! just stopping execution while testing.
-            print()
-            input('Push Enter to proceed => ')
+                # Settle hand wins and losses
+                self.gambler.settle_up(self.dealer.hand())
 
-            # Always reset all hands
-            self.discard_hands()
+            finally:
+
+                # TODO: Delete! just stopping execution while testing.
+                print()
+                input('Push Enter to proceed => ')
+
+                # Always reset all hands
+                self.discard_hands()

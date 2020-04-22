@@ -2,8 +2,8 @@ from collections import OrderedDict
 from functools import partial
 from time import sleep
 
-from blackjack.models.card import Card
 from blackjack.user_input import choice_response, get_user_input
+from blackjack.utils import header
 
 
 class Hand:
@@ -12,8 +12,8 @@ class Hand:
 
     def __init__(self, player, cards=None, status='Pending'):
         self.player = player
-        self.cards = cards or []  # Card order matters, so we'll store cards in a list
-        self.status = status      # Hands are initialized as 'Pending' by default (will be updated as they are played)
+        self.cards = cards or []  # Card order matters
+        self.status = status
 
         Hand.all_.append(self)
 
@@ -27,7 +27,7 @@ class Hand:
         """Sum the cards in the hand. Return 2 totals, due to the dual value of Aces."""
         # Get the number of aces in the hand
         num_aces = self.get_num_aces_in_hand()
-        
+
         # Get the total for all non-ace cards first, as this is constant
         non_ace_total = sum(card.value for card in self.cards if card.name != 'Ace')
 
@@ -107,12 +107,11 @@ class GamblerHand(Hand):
         self.wager = wager
         self.insurance = insurance
         self.hand_number = hand_number
-        
+
         if self.is_blackjack():
             self.status = 'Blackjack'
 
     def print(self):
-        # TODO: Print outcome of hand and/or insurance? (e.g. win/loss/push)?
         lines = [
             f"\nHand {self.hand_number}:",
             f"Cards: {self}",
@@ -120,13 +119,12 @@ class GamblerHand(Hand):
             f"Wager: ${self.wager}",
             f"Status: {self.status}"
         ]
-
         print('\n\t'.join(lines))
 
     def is_splittable(self):
         """
         Check whether the hand is splittable. Requirements:
-        
+
         1) Hand is made up of two cards.
         2) The name of the two cards matches (e.g. King-King, Five-Five, etc.)
         3) The Player has sufficient bankroll to split.
@@ -136,7 +134,7 @@ class GamblerHand(Hand):
     def is_doubleable(self):
         """
         Check whether the hand is doubleable. Requirements:
-        
+
         1) Hand is made up of two cards.
         2) The Player has sufficient bankroll to double.
         """
@@ -167,6 +165,9 @@ class GamblerHand(Hand):
 
         # Formatted options to display to the user
         display_options = [f"{option} ({abbreviation})" for abbreviation, option in options.items()]
+
+        # Separate out user actions under a new heading
+        print(header('ACTIONS'))
 
         # Ask what the user would like to do, given their options
         response = get_user_input(
@@ -330,15 +331,14 @@ class DealerHand(Hand):
         print('\n\t'.join(lines))
 
     def play(self, shoe):
-        # At this point, we've already checked whether the dealer has blackjack (and they do not, otherwise we wouldn't be here)
-        # Start playing the hand
+
         self.status = 'Playing'
 
         while self.status == 'Playing':
 
-            # Print a fresh screen so the user can see the dealer's buried card
-            self.player.table().print(hide_dealer=False)
-            sleep(2)
+            # Display the dealer's cards to the player
+            self.player.table().print(hide_dealer=False, dealer_playing=True)
+            sleep(1)
 
             # Get the hand total
             total = self.final_total()

@@ -24,7 +24,7 @@ class Player:
 
 
 class Gambler(Player):
-    
+
     def __init__(self, name, bankroll=0, auto_wager=0):
         super().__init__(name)
         self.bankroll = bankroll
@@ -177,15 +177,14 @@ class Gambler(Player):
         return any(hand.status in ('Doubled', 'Stood') for hand in self.hands())
 
     def settle_up(self, dealer_hand):
-        print('\nSetting up...')
         for hand in self.hands():
             hand.settle_up(dealer_hand)
 
 
 class Dealer(Player):
 
-    def __init__(self, name='Dealer'):
-        super().__init__(name)
+    def __init__(self):
+        super().__init__('Dealer')
 
     def table(self):
         return next((table for table in Table.all_ if table.dealer == self), None)

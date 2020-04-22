@@ -11,7 +11,7 @@ class Deck:
     def __init__(self, shoe=None):
         self.shoe = shoe
         self.number = Deck.counter
-        
+
         Deck.counter += 1
         Deck.all_.append(self)
 

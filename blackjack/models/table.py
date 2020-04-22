@@ -1,7 +1,5 @@
-from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.user_input import get_user_input, float_response, yes_no_response
-from blackjack.utils import clear
+from blackjack.utils import clear, header
 
 
 class Table:
@@ -15,12 +13,12 @@ class Table:
         self.shoe = shoe
         self.number = Table.counter
 
+        # Just for consistency
         Table.counter += 1
         Table.all_.append(self)
 
     def deal(self):
         # Deal 4 cards from the shoe
-        print("\nDealing...")
         card_1, card_2, card_3, card_4 = self.shoe.deal_n_cards(4)
 
         # Create the Hands from the dealt cards.
@@ -47,7 +45,7 @@ class Table:
 
         # Dealer can only have blackjack (which ends the turn) if they are showing a face card (value=10) or an ace.
         if self.dealer.is_showing_ace() or self.dealer.is_showing_face_card():
-            
+
             # Check if the dealer has blackjack, but don't display it to the gambler yet.
             dealer_has_blackjack = self.dealer.hand().is_blackjack()
 
@@ -144,11 +142,12 @@ class Table:
             else:
                 return 'play turn'
 
-    def print(self, hide_dealer=True, clear_screen=True):
-        
-        # Clear the terminal screen of other output if desired
-        if clear_screen:
-            clear()
+    def print(self, hide_dealer=True, dealer_playing=False):
+
+        # Clear the terminal screen
+        clear()
+
+        print(header('TABLE'))
 
         # Print the dealer. If `hide_dealer` is True, don't factor in the dealer's buried card.
         num_dashes = len(self.dealer.name) + 6
@@ -160,58 +159,54 @@ class Table:
         print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}")
         for hand in self.gambler.hands():
             hand.print()
+        print()
+
+        if dealer_playing:
+            print("Playing the Dealer's turn...")
+
+    def finalize_turn(self):
+        # Discard both the gambler and the dealer's hands.
+        self.discard_hands()
+        # Pause exectution until the user wants to proceed.
+        input('\n\nPush any key to proceed => ')
 
     def play(self):
 
         while not self.gambler.is_finished():
 
-            try:
-                clear()
-                print('\n--- New Turn ---\n')
+            # Clear previous screen and print header for the new turn.
+            clear()
+            print(header('NEW TURN'))
 
-                # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
-                self.gambler.check_wager()
+            # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
+            self.gambler.check_wager()
+            if self.gambler.is_finished():  # If they cashed out, don't play the turn. The game is over.
+                return
 
-                # If they cash out, don't play the turn.
-                if self.gambler.is_finished():
-                    return
+            # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
+            self.deal()
 
-                # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
-                self.deal()
+            # Print the table, clearing the screen and hiding the dealer's buried card from the gambler
+            self.print()
 
-                # Print the table, clearing the screen first and hiding the dealer's buried card from the gambler
-                self.print()
+            # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
+            result = self.play_pre_turn()
+            if result == 'turn over':
+                self.finalize_turn()
+                continue
 
-                print()
+            # Play the gambler's turn, and then the dealer's if necessary.
+            play_dealer_turn = self.gambler.play_turn(self.shoe)
+            if play_dealer_turn:
+                self.dealer.play_turn(self.shoe)
 
-                # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
-                result = self.play_pre_turn()
+            # Print the final table, showing the dealer's cards.
+            self.print(hide_dealer=False)
 
-                print()
+            print(header('OUTCOMES'))
 
-                if result == 'turn over':
-                    return
+            # Settle hand wins and losses.
+            self.gambler.settle_up(self.dealer.hand())
 
-                # Play the Gambler's turn
-                play_dealer_turn = self.gambler.play_turn(self.shoe)
-
-                print()
-
-                # Play the Dealer's turn if necessary
-                if play_dealer_turn:
-                    self.dealer.play_turn(self.shoe)
-
-                # Print the final table, showing the dealer's cards
-                self.print(hide_dealer=False)
-
-                # Settle hand wins and losses
-                self.gambler.settle_up(self.dealer.hand())
-
-            finally:
-
-                # TODO: Delete! just stopping execution while testing.
-                print()
-                input('Push Enter to proceed => ')
-
-                # Always reset all hands
-                self.discard_hands()
+            # Discard hands and pause execution until the user elects to proceed with the next turn.
+            self.finalize_turn()

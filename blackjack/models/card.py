@@ -24,11 +24,10 @@ class Card:
         self.name = name
         self.value = value
         self.deck = deck
-        
+
         Card.all_.append(self)
 
     def __str__(self):
-        # TODO: Use emojis for the suit!
         return f"{self.name} of {self.suit}"
 
     def __repr__(self):
@@ -36,6 +35,6 @@ class Card:
 
     def is_ace(self):
         return self.name == 'Ace'
-    
+
     def is_facecard(self):
         return self.value == 10

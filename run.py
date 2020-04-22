@@ -3,6 +3,7 @@ from blackjack.models.player import Dealer, Gambler
 from blackjack.models.shoe import Shoe
 from blackjack.models.table import Table
 from blackjack.user_input import get_user_input, float_response, int_response
+from blackjack.utils import header
 
 
 def setup_gambler():
@@ -50,7 +51,7 @@ def setup_table():
 
 if __name__ == '__main__':
 
-    print('♠️  ♥️  ♣️  ♦️   WELCOME TO THE BLACKJACK TABLE!  ♦️  ♣️  ♥️  ♠️')
+    print(header('WELCOME TO THE BLACKJACK TABLE'))
 
     # Set up the game.
     table = setup_table()
@@ -64,4 +65,4 @@ if __name__ == '__main__':
     else:
         print(f"\n{table.gambler.name} is out of money. Better luck next time!")
 
-    print('\n------------- Game Over -------------\n')
+    print(header('GAME OVER'))

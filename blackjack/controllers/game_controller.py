@@ -65,8 +65,12 @@ class GameController:
 
         # Create the Hands from the dealt cards.
         # Deal like they do a casinos --> one card to each player at a time, starting with the gambler.
-        GamblerHand(self.gambler, cards=[card_1, card_3])
-        DealerHand(self.dealer, cards=[card_2, card_4])
+        gambler_hand = GamblerHand(cards=[card_1, card_3])
+        dealer_hand = DealerHand(cards=[card_2, card_4])
+        
+        # Assign the dealt hands appropriately
+        self.gambler.hands.append(gambler_hand)
+        self.dealer.hand = dealer_hand
 
     @staticmethod
     def wants_even_money():
@@ -78,7 +82,7 @@ class GameController:
 
     def discard_hands(self):
         self.gambler.discard_hands()
-        self.dealer.discard_hands()
+        self.dealer.discard_hand()
 
     def play_pre_turn(self):
         """
@@ -104,7 +108,7 @@ class GameController:
                 # If the gambler has blackjack, they can either take even money or let it ride.
                 if gambler_has_blackjack:
 
-                    if self.gambler.wants_even_money() == 'yes':
+                    if self.wants_even_money() == 'yes':
                         print(f"{self.gambler.name} wins even money.")
                         self.gambler.first_hand().payout('wager', '1:1') 
                     else:
@@ -123,7 +127,7 @@ class GameController:
                     # Gambler must have sufficient bankroll to place an insurance bet.
                     gambler_can_afford_insurance = self.gambler.can_place_insurance_wager()
 
-                    if gambler_can_afford_insurance and self.gambler.wants_insurance() == 'yes':
+                    if gambler_can_afford_insurance and self.wants_insurance() == 'yes':
 
                         # Insurnace is a side bet that is half their wager, and pays 2:1 if dealer has blackjack.
                         self.gambler.place_insurance_wager()            
@@ -196,12 +200,12 @@ class GameController:
         # Print the dealer. If `hide_dealer` is True, don't factor in the dealer's buried card.
         num_dashes = len(self.dealer.name) + 6
         print(f"\n{'-'*12}\n   {self.dealer.name.upper()}   \n{'-'*12}\n")
-        self.dealer.hand().print(hide=hide_dealer)
+        self.dealer.hand.print(hide=hide_dealer)
 
         # Print the gambler
         num_dashes = len(self.gambler.name) + 6
         print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}")
-        for hand in self.gambler.hands():
+        for hand in self.gambler.hands:
             hand.print()
         print()
 
@@ -234,24 +238,24 @@ class GameController:
             # Print the table, clearing the screen and hiding the dealer's buried card from the gambler
             self.print()
 
-            # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
-            result = self.play_pre_turn()
-            if result == 'turn over':
-                self.finalize_turn()
-                continue
+            # # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
+            # result = self.play_pre_turn()
+            # if result == 'turn over':
+            #     self.finalize_turn()
+            #     continue
 
-            # Play the gambler's turn, and then the dealer's if necessary.
-            play_dealer_turn = self.gambler.play_turn(self.shoe)
-            if play_dealer_turn:
-                self.dealer.play_turn(self.shoe)
+            # # Play the gambler's turn, and then the dealer's if necessary.
+            # play_dealer_turn = self.gambler.play_turn(self.shoe)
+            # if play_dealer_turn:
+            #     self.dealer.play_turn(self.shoe)
 
-            # Print the final table, showing the dealer's cards.
-            self.print(hide_dealer=False)
+            # # Print the final table, showing the dealer's cards.
+            # self.print(hide_dealer=False)
 
-            print(header('OUTCOMES'))
+            # print(header('OUTCOMES'))
 
-            # Settle hand wins and losses.
-            self.gambler.settle_up(self.dealer.hand())
+            # # Settle hand wins and losses.
+            # self.gambler.settle_up(self.dealer.hand())
 
             # Discard hands and pause execution until the user elects to proceed with the next turn.
             self.finalize_turn()

@@ -1,6 +1,7 @@
 from blackjack.controllers.game_controller import GameController
+from blackjack.models.dealer import Dealer
 from blackjack.models.deck import Deck
-from blackjack.models.player import Dealer, Gambler
+from blackjack.models.gambler import Gambler
 from blackjack.models.shoe import Shoe
 from blackjack.user_input import get_user_input, float_response, int_response
 from blackjack.utils import header

@@ -7,18 +7,9 @@ from blackjack.utils import header
 
 class Hand:
 
-    all_ = []
-    id_counter = 1
-
-    def __init__(self, player, cards=None, status='Pending'):
-        self.player = player
-        self.cards = cards or []  # Card order matters
+    def __init__(self, cards=None, status='Pending'):
+        self.cards = cards or []  # Card order matters for consistent display
         self.status = status
-
-        # No database, so assign an ID and hold in memory
-        self.id = Hand.id_counter
-        Hand.id_counter += 1
-        Hand.all_.append(self)
 
     def __str__(self):
         return ' | '.join(str(card) for card in self.cards)
@@ -97,6 +88,7 @@ class Hand:
         _, high_total = self.possible_totals()
         return bool(high_total)
 
+    # TODO: Does this method belong here?
     def hit(self, shoe):
         """Add a card to the hand from a shoe."""
         card = shoe.deal_card()
@@ -105,8 +97,8 @@ class Hand:
 
 class GamblerHand(Hand):
 
-    def __init__(self, player, cards=None, status='Pending', wager=0, insurance=0, hand_number=1):
-        super().__init__(player, cards, status)
+    def __init__(self, cards=None, status='Pending', wager=0, insurance=0, hand_number=1):
+        super().__init__(cards, status)
         self.wager = wager
         self.insurance = insurance
         self.hand_number = hand_number

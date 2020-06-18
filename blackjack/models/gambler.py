@@ -1,40 +1,19 @@
 from blackjack.exc import InsufficientBankrollError, OverdraftError
-from blackjack.models.hand import Hand
 
 
-class Player:
+class Gambler:
 
-    all_ = []
-    id_counter = 1
-
-    def __init__(self, name):
+    def __init__(self, name, bankroll=0, auto_wager=0, hands=None):
         self.name = name
-
-        # No database, so assign an ID and hold in memory
-        self.id = Player.id_counter
-        Player.id_counter += 1
-        Player.all_.append(self)
-
-    def __str__(self):
-        return f"Player: {self.name}"
-
-    def hands(self):
-        return [hand for hand in Hand.all_ if hand.player == self]
-
-    def discard_hands(self):
-        for hand in self.hands():
-            Hand.all_.remove(hand)
-
-
-class Gambler(Player):
-
-    def __init__(self, name, bankroll=0, auto_wager=0):
-        super().__init__(name)
         self.bankroll = bankroll
         self.auto_wager = auto_wager
+        self.hands = hands or []
 
     def __str__(self):
-        return super().__str__() + f" | Bankroll: ${self.bankroll}"
+        return f"Player: {self.name} | Bankroll: ${self.bankroll}"
+
+    def discard_hands(self):
+        self.hands = []
 
     def is_finished(self):
         # Player is finished if they've set their wager to $0, or they're out of money
@@ -42,7 +21,7 @@ class Gambler(Player):
 
     def first_hand(self):
         # Helper method for action that happens on the initial hand dealt to the gambler
-        return self.hands()[0]
+        return self.hands[0]
 
     def _add_bankroll(self, amount):
         """Add an amount to the bankroll."""
@@ -113,36 +92,13 @@ class Gambler(Player):
     def play_turn(self, shoe):
         """Play the gambler's turn"""
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
-        while any(hand.status == 'Pending' for hand in self.hands()):
-            hand = next(hand for hand in self.hands() if hand.status == 'Pending')  # Grab the next unplayed hand
+        while any(hand.status == 'Pending' for hand in self.hands):
+            hand = next(hand for hand in self.hands if hand.status == 'Pending')  # Grab the next unplayed hand
             hand.play(shoe)  # Play the hand
         
         # Return True if the dealer's hand needs to be played, False otherwise
-        return any(hand.status in ('Doubled', 'Stood') for hand in self.hands())
+        return any(hand.status in ('Doubled', 'Stood') for hand in self.hands)
 
     def settle_up(self, dealer_hand):
-        for hand in self.hands():
+        for hand in self.hands:
             hand.settle_up(dealer_hand)
-
-
-class Dealer(Player):
-
-    def __init__(self):
-        super().__init__('Dealer')
-
-    def hand(self):
-        # The dealer will only ever have a single hand
-        return self.hands()[0]
-
-    def up_card(self):
-        # Shortcut to the dealer's hand's up_card
-        return self.hand().up_card()
-
-    def is_showing_ace(self):
-        return self.up_card().is_ace()
-
-    def is_showing_face_card(self):
-        return self.up_card().is_facecard()
-
-    def play_turn(self, shoe):
-        self.hand().play(shoe)

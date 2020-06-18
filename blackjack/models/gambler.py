@@ -34,9 +34,8 @@ class Gambler:
         else:
             raise OverdraftError('Bankroll cannot go negative')
 
-    def payout(self, amount, message):
+    def payout(self, amount):
         self._add_bankroll(amount)
-        print(message)
 
     def can_place_wager(self, amount):
         """Check whether the gambler has sufficient bankroll to place a wager."""
@@ -59,7 +58,6 @@ class Gambler:
         if self.can_place_wager(wager):
             self._subtract_bankroll(wager)  
             hand.wager += wager
-            print(f"${wager} wager placed on hand.")
         else:
             raise InsufficientBankrollError('Insufficient bankroll to place hand wager')    
 
@@ -73,7 +71,6 @@ class Gambler:
         if self.can_place_insurance_wager():
             self._subtract_bankroll(insurance_amount)
             self.first_hand().insurance = insurance_amount
-            print(f"${insurance_amount} insurance wager placed.")
         else:
             raise InsufficientBankrollError('Insufficient bankroll to place insurance wager')
 

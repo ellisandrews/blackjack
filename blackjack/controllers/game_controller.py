@@ -337,6 +337,97 @@ class GameController:
             else:
                 return 'play turn'
 
+    def pay_out_hand(self, hand, payout_type):
+        
+        # Pay out winning hand wagers 1:1 and reclaim the wager
+        if payout_type == 'wager':
+            self.perform_hand_payout(hand, 'winning_wager', '1:1')
+            self.perform_hand_payout(hand, 'wager_reclaim')
+        
+        # Pay out winning blackjack hands 3:2 and reclaim the wager
+        elif payout_type == 'blackjack':
+            self.perform_hand_payout(hand, 'winning_wager', '3:2')
+            self.perform_hand_payout(hand, 'wager_reclaim')
+
+        # Pay out winning insurance wagers 2:1 and reclaim the insurance wager
+        elif payout_type == 'insurance':
+            self.perform_hand_payout(hand, 'winning_insurance', '2:1')
+            self.perform_hand_payout(hand, 'insurance_reclaim')
+        
+        # Reclaim wager in case of a push
+        elif payout_type == 'push':
+            self.perform_hand_payout(hand, 'wager_reclaim')
+        
+        # Should not get here
+        else:
+            raise ValueError(f"Invalid payout type: '{payout_type}'")
+
+    def perform_hand_payout(self, hand, payout_type, odds=None):
+
+        # Validate args passed in
+        if payout_type in ('winning_wager', 'winning_insurance'):
+            assert odds, 'Must specify odds for wager and insurance payouts!'
+            antecedent, consequent = map(int, odds.split(':'))
+        
+        # Determine the payout amount by the payout_type (and odds if applicable)
+        if payout_type == 'winning_wager':
+            amount = hand.wager * antecedent / consequent
+            message = f"Adding winning hand payout of ${amount} to bankroll."
+        
+        elif payout_type == 'wager_reclaim':
+            amount = hand.wager
+            message = f"Reclaiming hand wager of ${amount}."
+        
+        elif payout_type == 'winning_insurance':
+            amount = hand.insurance * antecedent / consequent
+            message = f"Adding winning insurance payout of ${amount} to bankroll."
+        
+        elif payout_type == 'insurance_reclaim':
+            amount = hand.insurance
+            message = f"Reclaiming insurance wager of ${amount}."
+
+        else:
+            raise ValueError(f"Invalid payout type: '{payout_type}'")
+
+        self.gambler.payout(amount)
+        print(message)
+
+    def settle_hand(self, hand):
+        """Settle any outstanding wagers on a hand (relative to the dealer's hand)."""
+        
+        print(f"\n[ Hand {hand.hand_number} ]")
+
+        # If the gambler's hand is busted, it's a loss regardless
+        if hand.status == 'Busted':
+            print('Outcome: LOSS')
+            print(f"${hand.wager} hand wager lost.")
+
+        # If the dealer's hand is busted, it's a win (given that we've already checked for gambler hand bust)
+        elif self.dealer.hand.status == 'Busted':
+            print('Outcome: WIN')
+            self.pay_out_hand(hand, 'wager')
+        
+        # If neither gambler nor dealer hand is busted, compare totals to determine wins and losses.
+        else:
+            hand_total = hand.final_total()
+            dealer_hand_total = self.dealer.hand.final_total()
+
+            if hand_total > dealer_hand_total:
+                print('Outcome: WIN')
+                self.pay_out_hand(hand, 'wager')
+            elif hand_total == dealer_hand_total:
+                print('Outcome: PUSH')
+                self.pay_out_hand(hand, 'push')
+            else:
+                print('Outcome: LOSS')
+                print(f"${hand.wager} hand wager lost.")
+
+    def settle_up(self):
+        print('Settling up.')
+        # For each of the gambler's hands, settle wagers against the dealer's hand
+        for hand in self.gambler.hands:
+            self.settle_hand(hand)
+
     def print(self, hide_dealer=True, dealer_playing=False):
 
         print(header('TABLE'))
@@ -400,8 +491,8 @@ class GameController:
 
             # print(header('OUTCOMES'))
 
-            # # Settle hand wins and losses.
-            # self.gambler.settle_up(self.dealer.hand())
+            # Settle gambler hand wins and losses.
+            self.settle_up()
 
             # Discard hands and pause execution until the user elects to proceed with the next turn.
             self.finalize_turn()

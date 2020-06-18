@@ -1,23 +1,65 @@
+from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
+from blackjack.user_input import get_user_input, yes_no_response, float_response, max_retries_exit
 from blackjack.utils import clear, header
 
 
-class Table:
-
-    all_ = []
-    id_counter = 1
+class GameController:
 
     def __init__(self, gambler, dealer, shoe):
         self.gambler = gambler
         self.dealer = dealer
         self.shoe = shoe
 
-        # No database, so assign an ID and hold in memory
-        self.id = Table.id_counter
-        Table.id_counter += 1
-        Table.all_.append(self)
+    def check_gambler_wager(self):
+        """
+        1. Check whether the gambler has enough bankroll to place their auto-wager. If not, make them enter a new one.
+        2. Ask the gambler if they'd like to change their auto-wager or cash out. Allow them to do so.
+        """
+        # Check if the gambler still has sufficient bankroll to place the auto-wager
+        if self.gambler.can_place_auto_wager():
+
+            # Ask if the gambler wants to cash out or change their auto-wager
+            response = get_user_input(
+                f"{self.gambler.name}, change your auto-wager or cash out? (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager}) (y/n) => ", 
+                yes_no_response
+            )
+            
+            # If they want to make a change, make it
+            if response == 'yes':
+                self.set_new_auto_wager_from_input()
+
+        # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
+        else:
+            print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager})")
+            self.set_new_auto_wager_from_input()
+
+    def set_new_auto_wager_from_input(self, retries=3):
+        """Set a new auto-wager amount from user input (with input vetting and retry logic)."""
+        # Set their auto_wager to $0
+        self.gambler.zero_auto_wager()
+
+        # Ask them for a new auto wager and set it, with some validation
+        attempts = 0
+        success = False        
+        while not success and attempts < retries:
+            # This validates that they've entered a float
+            new_auto_wager = get_user_input(f"Please enter an auto-wager amount (Bankroll: ${self.gambler.bankroll}; enter $0 to cash out): $", float_response)
+            
+            # This validates that they've entered a wager <= their bankroll
+            try:
+                self.gambler.set_new_auto_wager(new_auto_wager)
+                success = True
+            except InsufficientBankrollError as e:
+                print(f"{e}. Please try again.")
+                attempts += 1
+
+        # If they've unsuccessfully tried to enter input the maximum number of times, exit the program
+        if attempts == retries and not success:
+            max_retries_exit()
 
     def deal(self):
+        """Deal cards from the Shoe to both the gambler and the dealer to form their initial hands."""
         # Deal 4 cards from the shoe
         card_1, card_2, card_3, card_4 = self.shoe.deal_n_cards(4)
 
@@ -25,9 +67,6 @@ class Table:
         # Deal like they do a casinos --> one card to each player at a time, starting with the gambler.
         GamblerHand(self.gambler, cards=[card_1, card_3])
         DealerHand(self.dealer, cards=[card_2, card_4])
-
-        # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
-        self.gambler.place_auto_wager()
 
     def discard_hands(self):
         self.gambler.discard_hands()
@@ -144,9 +183,6 @@ class Table:
 
     def print(self, hide_dealer=True, dealer_playing=False):
 
-        # Clear the terminal screen
-        clear()
-
         print(header('TABLE'))
 
         # Print the dealer. If `hide_dealer` is True, don't factor in the dealer's buried card.
@@ -174,17 +210,18 @@ class Table:
 
         while not self.gambler.is_finished():
 
-            # Clear previous screen and print header for the new turn.
-            clear()
             print(header('NEW TURN'))
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
-            self.gambler.check_wager()
+            self.check_gambler_wager()
             if self.gambler.is_finished():  # If they cashed out, don't play the turn. The game is over.
                 return
 
             # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
             self.deal()
+
+            # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
+            self.gambler.place_auto_wager()
 
             # Print the table, clearing the screen and hiding the dealer's buried card from the gambler
             self.print()

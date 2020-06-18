@@ -1,7 +1,7 @@
+from blackjack.controllers.game_controller import GameController
 from blackjack.models.deck import Deck
 from blackjack.models.player import Dealer, Gambler
 from blackjack.models.shoe import Shoe
-from blackjack.models.table import Table
 from blackjack.user_input import get_user_input, float_response, int_response
 from blackjack.utils import header
 
@@ -44,7 +44,7 @@ def setup_shoe(number_of_decks):
     return shoe
 
 
-def setup_table(from_user_input=True):
+def setup_game(from_user_input=True):
 
     # Ask the user for game setup data, or use a default schema
     if from_user_input:
@@ -73,8 +73,8 @@ def setup_table(from_user_input=True):
     dealer = Dealer()
     shoe = setup_shoe(number_of_decks)
 
-    # Create the blackjack Table. This is the central controller of the game.
-    return Table(gambler, dealer, shoe)
+    # Create the central controller of the game.
+    return GameController(gambler, dealer, shoe)
 
 
 if __name__ == '__main__':
@@ -82,15 +82,15 @@ if __name__ == '__main__':
     print(header('WELCOME TO THE BLACKJACK TABLE'))
 
     # Set up the game.
-    table = setup_table(from_user_input=False)  # TODO: Delete `from_user_input` arg for final version!
+    game = setup_game(from_user_input=False)  # TODO: Delete `from_user_input` arg for final version!
 
     # Run the game loop.
-    table.play()
+    game.play()
 
     # Print a final message after the gambler is finished
-    if table.gambler.auto_wager == 0:    
-        print(f"\n{table.gambler.name} cashed out with bankroll: ${table.gambler.bankroll}. Thanks for playing!")
+    if game.gambler.auto_wager == 0:    
+        print(f"\n{game.gambler.name} cashed out with bankroll: ${game.gambler.bankroll}. Thanks for playing!")
     else:
-        print(f"\n{table.gambler.name} is out of money. Better luck next time!")
+        print(f"\n{game.gambler.name} is out of money. Better luck next time!")
 
     print(header('GAME OVER'))

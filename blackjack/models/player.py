@@ -1,6 +1,5 @@
 from blackjack.exc import InsufficientBankrollError, OverdraftError
 from blackjack.models.hand import Hand
-from blackjack.models.table import Table
 from blackjack.user_input import float_response, get_user_input, max_retries_exit, yes_no_response
 
 
@@ -37,10 +36,6 @@ class Gambler(Player):
 
     def __str__(self):
         return super().__str__() + f" | Bankroll: ${self.bankroll}"
-
-    def table(self):
-        """Get the Table to which the Gambler belongs."""
-        return next((table for table in Table.all_ if table.gambler == self), None)
 
     def is_finished(self):
         # Player is finished if they've set their wager to $0, or they're out of money
@@ -119,30 +114,6 @@ class Gambler(Player):
         else:
             raise InsufficientBankrollError('Insufficient bankroll to set auto-wager')
 
-    def set_new_auto_wager_from_input(self, retries=3):
-        """Set a new auto-wager amount from user input (with input vetting and retry logic)."""
-        # Set their auto_wager to $0
-        self.zero_auto_wager()
-
-        # Ask them for a new auto wager and set it, with some validation
-        attempts = 0
-        success = False        
-        while not success and attempts < retries:
-            # This validates that they've entered a float
-            new_auto_wager = get_user_input(f"Please enter an auto-wager amount (Bankroll: ${self.bankroll}; enter $0 to cash out): $", float_response)
-            
-            # This validates that they've entered a wager <= their bankroll
-            try:
-                self.set_new_auto_wager(new_auto_wager)
-                success = True
-            except InsufficientBankrollError as e:
-                print(f"{e}. Please try again.")
-                attempts += 1
-
-        # If they've unsuccessfully tried to enter input the maximum number of times, exit the program
-        if attempts == retries and not success:
-            max_retries_exit()
-
     @staticmethod
     def wants_even_money():
         return get_user_input("Take even money? (y/n) => ", yes_no_response)
@@ -151,32 +122,12 @@ class Gambler(Player):
     def wants_insurance():
         return get_user_input("Insurance? (y/n) => ", yes_no_response)
 
-    def check_wager(self):
-        # Check if the gambler still has sufficient bankroll to place the auto-wager
-        if self.can_place_auto_wager():
-
-            # Ask if the gambler wants to cash out or change their auto-wager
-            response = get_user_input(
-                f"{self.name}, change your auto-wager or cash out? (Bankroll: ${self.bankroll}; Auto-Wager: ${self.auto_wager}) (y/n) => ", 
-                yes_no_response
-            )
-            
-            # If they want to make a change, make it
-            if response == 'yes':
-                self.set_new_auto_wager_from_input()
-
-        # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
-        else:
-            print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.bankroll}; Auto-Wager: ${self.auto_wager})")
-            self.set_new_auto_wager_from_input()
-
     def play_turn(self, shoe):
         """Play the gambler's turn"""
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
         while any(hand.status == 'Pending' for hand in self.hands()):
             hand = next(hand for hand in self.hands() if hand.status == 'Pending')  # Grab the next unplayed hand
             hand.play(shoe)  # Play the hand
-            self.table().print()
         
         # Return True if the dealer's hand needs to be played, False otherwise
         return any(hand.status in ('Doubled', 'Stood') for hand in self.hands())
@@ -190,9 +141,6 @@ class Dealer(Player):
 
     def __init__(self):
         super().__init__('Dealer')
-
-    def table(self):
-        return next((table for table in Table.all_ if table.dealer == self), None)
 
     def hand(self):
         # The dealer will only ever have a single hand

@@ -202,9 +202,6 @@ class GamblerHand(Hand):
                         self.status = 'Stood'
                     break
 
-            # Print a fresh screen for ease of user decision making
-            self.player.table().print()
-
             # Get the user's action from input
             action = self.get_user_action()
 
@@ -339,10 +336,6 @@ class DealerHand(Hand):
         self.status = 'Playing'
 
         while self.status == 'Playing':
-
-            # Display the dealer's cards to the player
-            self.player.table().print(hide_dealer=False, dealer_playing=True)
-            sleep(1)
 
             # Get the hand total
             total = self.final_total()

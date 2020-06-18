@@ -14,8 +14,5 @@ class Dealer:
     def is_showing_face_card(self):
         return self.up_card().is_facecard()
 
-    def play_turn(self, shoe):
-        self.hand.play(shoe)
-
     def discard_hand(self):
         self.hand = None

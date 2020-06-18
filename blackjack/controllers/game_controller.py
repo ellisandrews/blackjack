@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from functools import partial
+from time import sleep
 
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
@@ -16,6 +17,7 @@ class GameController:
 
     def check_gambler_wager(self):
         """
+        Pre-turn vetting of the gambler's wager.
         1. Check whether the gambler has enough bankroll to place their auto-wager. If not, make them enter a new one.
         2. Ask the gambler if they'd like to change their auto-wager or cash out. Allow them to do so.
         """
@@ -77,6 +79,9 @@ class GameController:
 
     def play_gambler_turn(self):
         """Play the gambler's turn, meaning play all of the gambler's hands to completion."""
+        
+        print(f"Playing {self.gambler.name}'s turn.")
+        
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
         while any(hand.status == 'Pending' for hand in self.gambler.hands):
             hand = next(hand for hand in self.gambler.hands if hand.status == 'Pending')  # Grab the next unplayed hand
@@ -180,6 +185,36 @@ class GameController:
     def double_hand(self, hand):
         self.gambler.place_hand_wager(hand.wager, hand)  # Double the wager on the hand
         self.hit_hand(hand)  # Add another card to the hand from the shoe
+
+    def play_dealer_turn(self):
+        
+        print("Playing the Dealer's turn.")
+
+        # Grab the dealer's lone hand to be played
+        hand = self.dealer.hand
+
+        # Set the hand's status to 'Playing', and loop until this status changes.
+        hand.status = 'Playing'
+        while hand.status == 'Playing':
+
+            # Get the hand total
+            total = hand.final_total()
+
+            # Dealer hits under 17 and must hit a soft 17.
+            if total < 17 or (total == 17 and hand.is_soft()):
+                print('Hitting...')
+                self.hit_hand(hand)
+            
+            # Dealer stands at 17 and above
+            else:
+                print('Stood.')
+                hand.status = 'Stood'
+
+            # If the hand is busted, it's over. Otherwise, sleep so the user can see the card progression
+            if hand.is_busted():
+                print('Busted!')
+                hand.status = 'Busted'
+                sleep(2)
 
     @staticmethod
     def wants_even_money():
@@ -353,10 +388,12 @@ class GameController:
             #     self.finalize_turn()
             #     continue
 
-            # Play the gambler's turn, and then the dealer's if necessary.
+            # Play the gambler's turn.
             play_dealer_turn = self.play_gambler_turn()
+            
+            # Play the dealer's turn if necessary
             if play_dealer_turn:
-                self.dealer.play_turn(self.shoe)
+                self.play_dealer_turn()
 
             # # Print the final table, showing the dealer's cards.
             # self.print(hide_dealer=False)

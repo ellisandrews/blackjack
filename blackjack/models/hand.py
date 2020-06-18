@@ -219,29 +219,3 @@ class DealerHand(Hand):
         ]
 
         print('\n\t'.join(lines))
-
-    def play(self, shoe):
-
-        self.status = 'Playing'
-
-        while self.status == 'Playing':
-
-            # Get the hand total
-            total = self.final_total()
-
-            if total < 17:
-                print('Hitting...')    # Deal another card and keep playing the hand.
-                self.hit(shoe)
-
-            elif total == 17 and self.is_soft():
-                print('Hitting...')  # Dealer must hit a soft 17
-                self.hit(shoe)
-            
-            else:
-                print('Stood.')
-                self.status = 'Stood'
-
-            # If the hand is busted, it's over. Otherwise, sleep so the user can see the card progression
-            if self.is_busted():
-                print('Busted!')
-                self.status = 'Busted'

@@ -1,7 +1,7 @@
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.user_input import get_user_input, yes_no_response, float_response, max_retries_exit
-from blackjack.utils import clear, header
+from blackjack.utils import header
 
 
 class GameController:
@@ -67,6 +67,14 @@ class GameController:
         # Deal like they do a casinos --> one card to each player at a time, starting with the gambler.
         GamblerHand(self.gambler, cards=[card_1, card_3])
         DealerHand(self.dealer, cards=[card_2, card_4])
+
+    @staticmethod
+    def wants_even_money():
+        return get_user_input("Take even money? (y/n) => ", yes_no_response)
+
+    @staticmethod
+    def wants_insurance():
+        return get_user_input("Insurance? (y/n) => ", yes_no_response)
 
     def discard_hands(self):
         self.gambler.discard_hands()

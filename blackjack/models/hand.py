@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from functools import partial
-from time import sleep
 
 from blackjack.user_input import choice_response, get_user_input
 from blackjack.utils import header
@@ -345,8 +344,8 @@ class DealerHand(Hand):
                 self.hit(shoe)
 
             elif total == 17 and self.is_soft():
-                    print('Hitting...')  # Dealer must hit a soft 17
-                    self.hit(shoe)
+                print('Hitting...')  # Dealer must hit a soft 17
+                self.hit(shoe)
             
             else:
                 print('Stood.')

@@ -82,7 +82,7 @@ if __name__ == '__main__':
     print(header('WELCOME TO THE BLACKJACK TABLE'))
 
     # Set up the game.
-    game = setup_game(from_user_input=False)  # TODO: Delete `from_user_input` arg for final version!
+    game = setup_game(from_user_input=False)  # Delete `from_user_input` arg for final version!
 
     # Run the game loop.
     game.play()

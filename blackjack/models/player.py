@@ -1,6 +1,5 @@
 from blackjack.exc import InsufficientBankrollError, OverdraftError
 from blackjack.models.hand import Hand
-from blackjack.user_input import float_response, get_user_input, max_retries_exit, yes_no_response
 
 
 class Player:
@@ -87,10 +86,7 @@ class Gambler(Player):
 
     def place_auto_wager(self):
         """Place the auto-wager on the dealt hand."""
-        try:
-            self.place_hand_wager(self.auto_wager, self.first_hand())
-        except InsufficientBankrollError:
-            raise
+        self.place_hand_wager(self.auto_wager, self.first_hand())
 
     def place_insurance_wager(self):
         """Place an insurance wager on the first hand."""
@@ -113,14 +109,6 @@ class Gambler(Player):
             self.auto_wager = auto_wager
         else:
             raise InsufficientBankrollError('Insufficient bankroll to set auto-wager')
-
-    @staticmethod
-    def wants_even_money():
-        return get_user_input("Take even money? (y/n) => ", yes_no_response)
-
-    @staticmethod
-    def wants_insurance():
-        return get_user_input("Insurance? (y/n) => ", yes_no_response)
 
     def play_turn(self, shoe):
         """Play the gambler's turn"""

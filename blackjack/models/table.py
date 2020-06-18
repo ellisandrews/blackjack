@@ -5,16 +5,16 @@ from blackjack.utils import clear, header
 class Table:
 
     all_ = []
-    counter = 1
+    id_counter = 1
 
     def __init__(self, gambler, dealer, shoe):
         self.gambler = gambler
         self.dealer = dealer
         self.shoe = shoe
-        self.number = Table.counter
 
-        # Just for consistency
-        Table.counter += 1
+        # No database, so assign an ID and hold in memory
+        self.id = Table.id_counter
+        Table.id_counter += 1
         Table.all_.append(self)
 
     def deal(self):

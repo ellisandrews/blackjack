@@ -1,6 +1,7 @@
 class Card:
 
     all_ = []
+    id_counter = 1
 
     SUITS = ['Spades', 'Hearts', 'Clubs', 'Diamonds']
     RANKS = [
@@ -25,6 +26,9 @@ class Card:
         self.value = value
         self.deck = deck
 
+        # No database, so assign an ID and hold in memory
+        self.id = Card.id_counter
+        Card.id_counter += 1
         Card.all_.append(self)
 
     def __str__(self):

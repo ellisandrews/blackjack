@@ -7,9 +7,14 @@ from blackjack.user_input import float_response, get_user_input, max_retries_exi
 class Player:
 
     all_ = []
+    id_counter = 1
 
     def __init__(self, name):
         self.name = name
+
+        # No database, so assign an ID and hold in memory
+        self.id = Player.id_counter
+        Player.id_counter += 1
         Player.all_.append(self)
 
     def __str__(self):

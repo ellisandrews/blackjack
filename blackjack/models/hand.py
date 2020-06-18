@@ -9,12 +9,16 @@ from blackjack.utils import header
 class Hand:
 
     all_ = []
+    id_counter = 1
 
     def __init__(self, player, cards=None, status='Pending'):
         self.player = player
         self.cards = cards or []  # Card order matters
         self.status = status
 
+        # No database, so assign an ID and hold in memory
+        self.id = Hand.id_counter
+        Hand.id_counter += 1
         Hand.all_.append(self)
 
     def __str__(self):

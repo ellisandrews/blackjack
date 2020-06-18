@@ -6,26 +6,32 @@ from blackjack.user_input import get_user_input, float_response, int_response
 from blackjack.utils import header
 
 
-def setup_gambler():
+def get_setup_input():
 
     # Gambler setup data
     name = input("Please enter a player name => ")
     bankroll = get_user_input("Please enter a bankroll amount => $", float_response)
 
-    # Create the Gambler, and ask them to set an initial auto-wager amount.
-    gambler = Gambler(name, bankroll=bankroll)
-    gambler.set_new_auto_wager_from_input()
+    # Shoe setup data
+    number_of_decks = get_user_input("Please enter the number of decks to use => ", int_response)
 
-    return gambler
+    # Return the data to be used to set up the game
+    return {
+        'gambler': {
+            'name': name,
+            'bankroll': bankroll,
+            'auto_wager': bankroll / 10  # Start them off with a 10% auto-wager
+        },
+        'shoe': {
+            'number_of_decks': number_of_decks
+        }
+    }
 
 
-def setup_shoe():
+def setup_shoe(number_of_decks):
 
     # Instantiate a new Shoe.
     shoe = Shoe()
-
-    # Ask user how many Decks of Cards they want to play with.
-    number_of_decks = get_user_input("Please enter the number of decks to use => ", int_response)
 
     # Create the specified number of decks (populated with standard 52 Cards each)
     for _ in range(number_of_decks):
@@ -38,12 +44,34 @@ def setup_shoe():
     return shoe
 
 
-def setup_table():
+def setup_table(from_user_input=True):
+
+    # Ask the user for game setup data, or use a default schema
+    if from_user_input:
+        setup_data = get_setup_input()
+    else:
+        setup_data = {
+            'gambler': {
+                'name': 'Player 1',
+                'bankroll': 100,
+                'auto_wager': 10
+            },
+            'shoe': {
+                'number_of_decks': 3
+            }
+        }
+
+    # Extract values from setup_data. Note that this dict could grow and be stored/loaded from a
+    # different source, so doing this to keep configuration flexible.
+    name = setup_data['gambler']['name']
+    bankroll = setup_data['gambler']['bankroll']
+    auto_wager = setup_data['gambler']['auto_wager']
+    number_of_decks = setup_data['shoe']['number_of_decks']
 
     # Create core components of the game: A Gambler, a Dealer, and a Shoe of cards.
-    gambler = setup_gambler()
+    gambler = Gambler(name, bankroll=bankroll, auto_wager=auto_wager)
     dealer = Dealer()
-    shoe = setup_shoe()
+    shoe = setup_shoe(number_of_decks)
 
     # Create the blackjack Table. This is the central controller of the game.
     return Table(gambler, dealer, shoe)
@@ -54,9 +82,9 @@ if __name__ == '__main__':
     print(header('WELCOME TO THE BLACKJACK TABLE'))
 
     # Set up the game.
-    table = setup_table()
+    table = setup_table(from_user_input=False)  # TODO: Delete `from_user_input` arg for final version!
 
-    # Play the game until the Gambler has cashed out or is out of money.
+    # Run the game loop.
     table.play()
 
     # Print a final message after the gambler is finished

@@ -1,6 +1,9 @@
+from collections import OrderedDict
+from functools import partial
+
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.user_input import get_user_input, yes_no_response, float_response, max_retries_exit
+from blackjack.user_input import choice_response, float_response, get_user_input, max_retries_exit, yes_no_response
 from blackjack.utils import header
 
 
@@ -71,6 +74,112 @@ class GameController:
         # Assign the dealt hands appropriately
         self.gambler.hands.append(gambler_hand)
         self.dealer.hand = dealer_hand
+
+    def play_gambler_turn(self):
+        """Play the gambler's turn, meaning play all of the gambler's hands to completion."""
+        # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
+        while any(hand.status == 'Pending' for hand in self.gambler.hands):
+            hand = next(hand for hand in self.gambler.hands if hand.status == 'Pending')  # Grab the next unplayed hand
+            self.play_gambler_hand(hand)
+        
+        # Return True if the dealer's hand needs to be played, False otherwise
+        return any(hand.status in ('Doubled', 'Stood') for hand in self.gambler.hands)
+
+    def play_gambler_hand(self, hand):
+        """Play a gambler hand."""
+        # Set the hand's status to 'Playing', and loop until this status changes.
+        hand.status = 'Playing'
+        while hand.status == 'Playing':
+
+            # If the hand resulted from splitting, hit it automatically.
+            if len(hand.cards) == 1:
+                
+                print('Adding second card to split hand...')
+                hand.hit(self.shoe)
+
+                # Split Aces only get 1 more card.
+                if hand.cards[0].is_ace():
+                    if hand.is_blackjack():
+                        hand.status = 'Blackjack'
+                    else:
+                        hand.status = 'Stood'
+                    break
+
+            # Get the gambler's action from input
+            action = self.get_gambler_hand_action(hand)
+
+            if action == 'Hit':
+                print('Hitting...')    # Deal another card and keep playing the hand.
+                self.hit_hand(hand)
+
+            elif action == 'Stand':
+                print('Stood.')        # Do nothing, hand is played.
+                hand.status = 'Stood'
+
+            elif action == 'Double':
+                print('Doubling...')   # Deal another card and print. Hand is played.
+                self.double_hand(hand)
+                hand.status = 'Doubled'
+
+            elif action == 'Split':
+                print('Splitting...')  # Put the second card into a new hand and keep playing this hand
+                self.split_hand(hand)
+                continue
+
+            else:
+                raise Exception('Unhandled response.')  # Should never get here
+
+            # If the hand is 21 or busted, the hand is done being played.
+            if hand.is_21():
+                print('21!')
+                hand.status = 'Stood'
+            elif hand.is_busted():
+                print('Busted!')
+                hand.status = 'Busted'
+
+    def get_gambler_hand_action(self, hand):
+        """List action options for the user on the hand, and get their choice."""
+        # Default options that are always available
+        options = OrderedDict([('h', 'Hit'), ('s', 'Stand')])
+
+        # Add the option to double if applicable
+        if hand.is_doubleable() and self.gambler.can_place_wager(hand.wager):
+            options['d'] = 'Double'
+
+        # Add the option to split if applicable
+        if hand.is_splittable() and self.gambler.can_place_wager(hand.wager):
+            options['x'] = 'Split'
+
+        # Formatted options to display to the user
+        display_options = [f"{option} ({abbreviation})" for abbreviation, option in options.items()]
+
+        # Separate out user actions under a new heading
+        print(header('ACTIONS'))
+
+        # Ask what the user would like to do, given their options
+        response = get_user_input(
+            f"\n[ Hand {hand.hand_number} ] What would you like to do? [ {' , '.join(display_options)} ] => ",
+            partial(choice_response, choices=options.keys())
+        )
+
+        # Return the user's selection ('hit', 'stand', etc.)
+        return options[response]
+
+    def hit_hand(self, hand):
+        """Add a card to a hand from the shoe."""
+        card = self.shoe.deal_card()  # Deal a card
+        hand.cards.append(card)  # Add the card to the hand
+
+    def split_hand(self, hand):
+        """Split a hand."""
+        split_card = hand.cards.pop(1)  # Pop the second card off the hand to make a new hand
+        new_hand = GamblerHand(cards=[split_card], hand_number=len(self.gambler.hands) + 1)  # TODO: Do away with hand_number
+        self.gambler.place_hand_wager(hand.wager, new_hand)  # Place the same wager on the new hand
+        self.gambler.hands.append(new_hand)  # Add the hand to the gambler's list of hands
+
+    def double_hand(self, hand):
+        self.gambler.place_hand_wager(hand.wager, hand)  # Double the wager on the hand
+        self.hit_hand(hand)  # Add another card to the hand from the shoe
 
     @staticmethod
     def wants_even_money():
@@ -244,10 +353,10 @@ class GameController:
             #     self.finalize_turn()
             #     continue
 
-            # # Play the gambler's turn, and then the dealer's if necessary.
-            # play_dealer_turn = self.gambler.play_turn(self.shoe)
-            # if play_dealer_turn:
-            #     self.dealer.play_turn(self.shoe)
+            # Play the gambler's turn, and then the dealer's if necessary.
+            play_dealer_turn = self.play_gambler_turn()
+            if play_dealer_turn:
+                self.dealer.play_turn(self.shoe)
 
             # # Print the final table, showing the dealer's cards.
             # self.print(hide_dealer=False)

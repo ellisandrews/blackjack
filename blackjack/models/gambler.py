@@ -89,16 +89,6 @@ class Gambler:
         else:
             raise InsufficientBankrollError('Insufficient bankroll to set auto-wager')
 
-    def play_turn(self, shoe):
-        """Play the gambler's turn"""
-        # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
-        while any(hand.status == 'Pending' for hand in self.hands):
-            hand = next(hand for hand in self.hands if hand.status == 'Pending')  # Grab the next unplayed hand
-            hand.play(shoe)  # Play the hand
-        
-        # Return True if the dealer's hand needs to be played, False otherwise
-        return any(hand.status in ('Doubled', 'Stood') for hand in self.hands)
-
     def settle_up(self, dealer_hand):
         for hand in self.hands:
             hand.settle_up(dealer_hand)

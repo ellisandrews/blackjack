@@ -233,16 +233,19 @@ class GameController:
         Carry out pre-turn flow for blackjacks, insurance, etc.
         TODO: Refactor into smaller pieces! Not 100% DRY either right now.
         """
+        # Grab the gambler's dealt hand
+        gambler_hand = self.gambler.first_hand()
+
         # Check if the gambler has blackjack
-        gambler_has_blackjack = self.gambler.first_hand().is_blackjack()
+        gambler_has_blackjack = gambler_hand.is_blackjack()
         if gambler_has_blackjack:
-            print(f"{self.gambler.name} HAS BLACKJACK!")
+            print(f"{self.gambler.name} has blackjack.")
 
         # Dealer can only have blackjack (which ends the turn) if they are showing a face card (value=10) or an ace.
         if self.dealer.is_showing_ace() or self.dealer.is_showing_face_card():
 
             # Check if the dealer has blackjack, but don't display it to the gambler yet.
-            dealer_has_blackjack = self.dealer.hand().is_blackjack()
+            dealer_has_blackjack = self.dealer.hand.is_blackjack()
 
             # Insurance comes into play if the dealer's upcard is an ace
             if self.dealer.is_showing_ace():
@@ -253,15 +256,18 @@ class GameController:
                 if gambler_has_blackjack:
 
                     if self.wants_even_money() == 'yes':
+                        # Pay out even money (meaning 1:1 hand wager)
                         print(f"{self.gambler.name} wins even money.")
-                        self.gambler.first_hand().payout('wager', '1:1') 
+                        self.pay_out_hand(gambler_hand, 'wager')
                     else:
                         if dealer_has_blackjack:
-                            print('Dealer HAS BLACKJACK. Hand is a push.')
-                            self.gambler.first_hand().payout('push')
+                            # Both players have blackjack. Gambler reclaims their wager and that's all.
+                            print('Dealer has blackjack. Hand is a push.')
+                            self.pay_out_hand(gambler_hand, 'push')
                         else:
-                            print(f"Dealer DOES NOT HAVE BLACKJACK. {self.gambler.name} wins 3:2.")
-                            self.gambler.first_hand().payout('wager', '3:2') 
+                            # Dealer does not have blackjack. Gambler has won a blackjack (which pays 3:2)
+                            print(f"Dealer does not have blackjack. {self.gambler.name} wins 3:2.")
+                            self.pay_out_hand(gambler_hand, 'blackjack')
 
                     # The turn is over no matter what if the gambler has blackjack
                     return 'turn over'
@@ -278,11 +284,11 @@ class GameController:
 
                         # The turn is over if the dealer has blackjack. Otherwise, continue on to playing the hand.
                         if dealer_has_blackjack:
-                            print(f"Dealer HAS BLACKJACK. {self.gambler.name}'s insurnace wager wins 2:1 but hand wager loses.")
+                            print(f"Dealer has blackjack. {self.gambler.name}'s insurnace wager wins 2:1 but hand wager loses.")
                             self.gambler.first_hand().payout('insurance', '2:1')
                             return 'turn over'
                         else:
-                            print(f"Dealer DOES NOT HAVE BLACKJACK. {self.gambler.name}'s insurance wager loses.")
+                            print(f"Dealer does not have blackjack. {self.gambler.name}'s insurance wager loses.")
                             return 'play turn'
 
                     # If the gambler does not (or cannot) place an insurance bet, they lose if the dealer has blackjack. Otherwise, hand continues.
@@ -291,25 +297,24 @@ class GameController:
                             print('Insufficient bankroll to place insurance wager.')
 
                         if dealer_has_blackjack:
-                            print(f"Dealer HAS BLACKJACK. {self.gambler.name} loses the hand.")
+                            print(f"Dealer has blackjack. {self.gambler.name} loses the hand.")
                             return 'turn over'
                         else:
-                            print('Dealer DOES NOT HAVE BLACKJACK.')
+                            print('Dealer does not have blackjack.')
                             return 'play turn'
 
             # If the dealer's upcard is a face card, insurance is not in play but need to check if the dealer has blackjack.
             else:
-                
-                print('Checking if the dealer HAS BLACKJACK...')
+                print('Checking if the dealer has blackjack...')
 
                 # If the dealer has blackjack, it's a push if the player also has blackjack. Otherwise, the player loses.
                 if dealer_has_blackjack:
 
-                    print('Dealer HAS BLACKJACK.')
+                    print('Dealer has blackjack.')
 
                     if gambler_has_blackjack:
                         print('Hand is a push.')
-                        self.gambler.first_hand().payout('push')
+                        self.pay_out_hand(gambler_hand, 'push')
                     else:
                         print(f"{self.gambler.name} loses the hand.")
                         
@@ -318,11 +323,11 @@ class GameController:
 
                 # If dealer doesn't have blackjack, the player wins if they have blackjack. Otherwise, play the turn.
                 else:
-                    print('Dealer DOES NOT HAVE BLACKJACK.')
+                    print('Dealer does not have blackjack.')
                     
                     if gambler_has_blackjack:
                         print(f"{self.gambler.name} wins 3:2.")
-                        self.gambler.first_hand().payout('wager', '3:2')
+                        self.pay_out_hand(gambler_hand, 'blackjack')
                         return 'turn over'
                     else:
                         return 'play turn'
@@ -332,7 +337,7 @@ class GameController:
         else:
             if gambler_has_blackjack:
                 print(f"{self.gambler.name} wins 3:2.")
-                self.gambler.first_hand().payout('wager', '3:2') 
+                self.pay_out_hand(gambler_hand, 'blackjack')
                 return 'turn over'
             else:
                 return 'play turn'
@@ -473,11 +478,11 @@ class GameController:
             # Print the table, clearing the screen and hiding the dealer's buried card from the gambler
             self.print()
 
-            # # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
-            # result = self.play_pre_turn()
-            # if result == 'turn over':
-            #     self.finalize_turn()
-            #     continue
+            # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
+            result = self.play_pre_turn()
+            if result == 'turn over':
+                self.finalize_turn()
+                continue
 
             # Play the gambler's turn.
             play_dealer_turn = self.play_gambler_turn()

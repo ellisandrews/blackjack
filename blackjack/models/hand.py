@@ -1,6 +1,3 @@
-from blackjack.utils import header
-
-
 class Hand:
 
     def __init__(self, cards=None, status='Pending'):

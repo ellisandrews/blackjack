@@ -93,7 +93,8 @@ class GamblerHand(Hand):
         if self.is_blackjack():
             self.status = 'Blackjack'
 
-    def print(self):
+    def pretty_format(self):
+        """Get a string representation of the hand formatted to be printed."""
         lines = [
             f"\nHand {self.hand_number}:",
             f"Cards: {self}",
@@ -101,7 +102,7 @@ class GamblerHand(Hand):
             f"Wager: ${self.wager}",
             f"Status: {self.status}"
         ]
-        print('\n\t'.join(lines))
+        return '\n\t'.join(lines)
 
     def is_splittable(self):
         """
@@ -126,8 +127,9 @@ class DealerHand(Hand):
     def up_card(self):
         return self.cards[0]
 
-    def print(self, hide=False):
-        if hide:
+    def pretty_format(self, hide_burried_card=True):
+        """Get a string representation of the hand formatted to be printed."""
+        if hide_burried_card:
             up_card = self.up_card()
             cards = f"Upcard: {up_card}"
             total = f"Total: {up_card.value if up_card.name != 'Ace' else '1 or 11'}"
@@ -141,5 +143,4 @@ class DealerHand(Hand):
             total,
             f"Status: {self.status}"
         ]
-
-        print('\n\t'.join(lines))
+        return '\n\t'.join(lines)

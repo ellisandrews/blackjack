@@ -5,7 +5,7 @@ from time import sleep
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.user_input import choice_response, float_response, get_user_input, max_retries_exit, yes_no_response
-from blackjack.utils import header
+from blackjack.utils import clear, header
 
 
 class GameController:
@@ -94,13 +94,17 @@ class GameController:
         """Play a gambler hand."""
         # Set the hand's status to 'Playing', and loop until this status changes.
         hand.status = 'Playing'
+
+        # Print the table to show which hand is being played
+        self.print_table()
+
         while hand.status == 'Playing':
 
             # If the hand resulted from splitting, hit it automatically.
             if len(hand.cards) == 1:
                 
                 print('Adding second card to split hand...')
-                hand.hit(self.shoe)
+                self.hit_hand(hand)
 
                 # Split Aces only get 1 more card.
                 if hand.cards[0].is_ace():
@@ -141,6 +145,9 @@ class GameController:
             elif hand.is_busted():
                 print('Busted!')
                 hand.status = 'Busted'
+
+            # Print the outcome of the gambler's action
+            self.print_table()
 
     def get_gambler_hand_action(self, hand):
         """List action options for the user on the hand, and get their choice."""
@@ -195,6 +202,10 @@ class GameController:
 
         # Set the hand's status to 'Playing', and loop until this status changes.
         hand.status = 'Playing'
+
+        self.print_table(hide_dealer=False, dealer_playing=True)
+        sleep(2)
+
         while hand.status == 'Playing':
 
             # Get the hand total
@@ -214,7 +225,9 @@ class GameController:
             if hand.is_busted():
                 print('Busted!')
                 hand.status = 'Busted'
-                sleep(2)
+            
+            self.print_table(hide_dealer=False, dealer_playing=True)
+            sleep(2)
 
     @staticmethod
     def wants_even_money():
@@ -433,20 +446,23 @@ class GameController:
         for hand in self.gambler.hands:
             self.settle_hand(hand)
 
-    def print(self, hide_dealer=True, dealer_playing=False):
+    def print_table(self, hide_dealer=True, dealer_playing=False):
+
+        # Clear terminal output to reprint the table
+        clear()  # NOTE: Eventually come up with a better solution
 
         print(header('TABLE'))
 
-        # Print the dealer. If `hide_dealer` is True, don't factor in the dealer's buried card.
+        # Print the dealer's hand. If `hide_dealer` is True, don't factor in the dealer's buried card.
         num_dashes = len(self.dealer.name) + 6
-        print(f"\n{'-'*12}\n   {self.dealer.name.upper()}   \n{'-'*12}\n")
-        self.dealer.hand.print(hide=hide_dealer)
+        print(f"{'-'*num_dashes}\n   {self.dealer.name.upper()}   \n{'-'*num_dashes}\n")
+        print(self.dealer.hand.pretty_format(hide_burried_card=hide_dealer))
 
-        # Print the gambler
+        # Print the gambler's hand(s)
         num_dashes = len(self.gambler.name) + 6
         print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}")
         for hand in self.gambler.hands:
-            hand.print()
+            print(hand.pretty_format())
         print()
 
         if dealer_playing:
@@ -475,8 +491,8 @@ class GameController:
             # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
             self.gambler.place_auto_wager()
 
-            # Print the table, clearing the screen and hiding the dealer's buried card from the gambler
-            self.print()
+            # Print the table, hiding the dealer's buried card from the gambler
+            self.print_table()
 
             # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
             result = self.play_pre_turn()

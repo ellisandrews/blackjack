@@ -472,7 +472,7 @@ class GameController:
         # Discard both the gambler and the dealer's hands.
         self.discard_hands()
         # Pause exectution until the user wants to proceed.
-        input('\n\nPush any key to proceed => ')
+        input('\n\nPush ENTER to proceed => ')
 
     def play(self):
 

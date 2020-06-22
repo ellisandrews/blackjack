@@ -3,21 +3,21 @@ import random
 from blackjack.models.deck import Deck
 
 
-# NOTE: Shoe is 1-to-1 with Table
 class Shoe:
 
     all_ = []
-    counter = 1
+    id_counter = 1
 
     def __init__(self):
-        self.number = Shoe.counter
         self.card_pile = []  # This will hold the cards that are eligible to be dealt
 
-        Shoe.counter += 1
+        # No database, so assign an ID and hold in memory
+        self.id = Shoe.id_counter
+        Shoe.id_counter += 1
         Shoe.all_.append(self)
 
     def __str__(self):
-        return f"{self.__class__.__name__} {self.number}"
+        return f"{self.__class__.__name__} {self.id}"
 
     def __repr__(self):
         return self.__str__()

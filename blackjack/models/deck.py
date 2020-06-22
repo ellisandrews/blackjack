@@ -6,17 +6,18 @@ from blackjack.models.card import Card
 class Deck:
 
     all_ = []
-    counter = 1
+    id_counter = 1
 
     def __init__(self, shoe=None):
         self.shoe = shoe
-        self.number = Deck.counter
 
-        Deck.counter += 1
+        # No database, so assign an ID and hold in memory
+        self.id = Deck.id_counter
+        Deck.id_counter += 1
         Deck.all_.append(self)
 
     def __str__(self):
-        return f"{self.__class__.__name__} {self.number}"
+        return f"{self.__class__.__name__} {self.id}"
 
     def __repr__(self):
         return self.__str__()

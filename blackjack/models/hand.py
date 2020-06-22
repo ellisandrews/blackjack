@@ -1,21 +1,8 @@
-from collections import OrderedDict
-from functools import partial
-from time import sleep
-
-from blackjack.user_input import choice_response, get_user_input
-from blackjack.utils import header
-
-
 class Hand:
 
-    all_ = []
-
-    def __init__(self, player, cards=None, status='Pending'):
-        self.player = player
-        self.cards = cards or []  # Card order matters
+    def __init__(self, cards=None, status='Pending'):
+        self.cards = cards or []  # Card order matters for consistent display
         self.status = status
-
-        Hand.all_.append(self)
 
     def __str__(self):
         return ' | '.join(str(card) for card in self.cards)
@@ -94,16 +81,11 @@ class Hand:
         _, high_total = self.possible_totals()
         return bool(high_total)
 
-    def hit(self, shoe):
-        """Add a card to the hand from a shoe."""
-        card = shoe.deal_card()
-        self.cards.append(card)
-
 
 class GamblerHand(Hand):
 
-    def __init__(self, player, cards=None, status='Pending', wager=0, insurance=0, hand_number=1):
-        super().__init__(player, cards, status)
+    def __init__(self, cards=None, status='Pending', wager=0, insurance=0, hand_number=1):
+        super().__init__(cards, status)
         self.wager = wager
         self.insurance = insurance
         self.hand_number = hand_number
@@ -111,7 +93,8 @@ class GamblerHand(Hand):
         if self.is_blackjack():
             self.status = 'Blackjack'
 
-    def print(self):
+    def pretty_format(self):
+        """Get a string representation of the hand formatted to be printed."""
         lines = [
             f"\nHand {self.hand_number}:",
             f"Cards: {self}",
@@ -119,192 +102,24 @@ class GamblerHand(Hand):
             f"Wager: ${self.wager}",
             f"Status: {self.status}"
         ]
-        print('\n\t'.join(lines))
+        return '\n\t'.join(lines)
 
     def is_splittable(self):
         """
-        Check whether the hand is splittable. Requirements:
-
+        Check whether the hand is splittable. 
+        Requirements:
         1) Hand is made up of two cards.
         2) The name of the two cards matches (e.g. King-King, Five-Five, etc.)
-        3) The Player has sufficient bankroll to split.
         """
-        return len(self.cards) == 2 and self.cards[0].name == self.cards[1].name and self.player.bankroll >= self.wager
+        return len(self.cards) == 2 and self.cards[0].name == self.cards[1].name
 
     def is_doubleable(self):
         """
-        Check whether the hand is doubleable. Requirements:
-
+        Check whether the hand is doubleable. 
+        Requirements:
         1) Hand is made up of two cards.
-        2) The Player has sufficient bankroll to double.
         """
-        return len(self.cards) == 2 and self.player.bankroll >= self.wager
-
-    def split(self):
-        """Split the current hand."""
-        split_card = self.cards.pop(1)  # Pop the second card off the hand to make a new hand
-        new_hand = GamblerHand(self.player, cards=[split_card], hand_number=len(self.player.hands())+1)
-        self.player.place_hand_wager(self.wager, new_hand)  # Place the same wager on the new hand
-
-    def double(self, shoe):
-        self.player.place_hand_wager(self.wager, self)  # Double the wager on the hand
-        self.hit(shoe)  # Add another card to the hand from the shoe
-
-    def get_user_action(self):
-        """List action options for the user on the hand, and get their choice."""
-        # Default turn options
-        options = OrderedDict([('h', 'Hit'), ('s', 'Stand')])
-
-        # Add the option to doulbe if applicable
-        if self.is_doubleable():
-            options['d'] = 'Double'
-
-        # Add the option to split if applicable
-        if self.is_splittable():
-            options['x'] = 'Split'
-
-        # Formatted options to display to the user
-        display_options = [f"{option} ({abbreviation})" for abbreviation, option in options.items()]
-
-        # Separate out user actions under a new heading
-        print(header('ACTIONS'))
-
-        # Ask what the user would like to do, given their options
-        response = get_user_input(
-            f"\n[ Hand {self.hand_number} ] What would you like to do? [ {' , '.join(display_options)} ] => ",
-            partial(choice_response, choices=options.keys())
-        )
-
-        # Return the user's selection ('hit', 'stand', etc.)
-        return options[response]
-
-    def play(self, shoe):
-        """Play the hand."""
-
-        self.status = 'Playing'
-
-        while self.status == 'Playing':
-
-            # If the hand resulted from splitting, hit it automatically.
-            if len(self.cards) == 1:
-                print('Adding second card to split hand...')
-                self.hit(shoe)
-
-                # Split Aces only get 1 more card.
-                if self.cards[0].is_ace():
-                    if self.is_blackjack():
-                        self.status = 'Blackjack'
-                    else:
-                        self.status = 'Stood'
-                    break
-
-            # Print a fresh screen for ease of user decision making
-            self.player.table().print()
-
-            # Get the user's action from input
-            action = self.get_user_action()
-
-            if action == 'Hit':
-                print('Hitting...')    # Deal another card and keep playing the hand.
-                self.hit(shoe)
-
-            elif action == 'Stand':
-                print('Stood.')        # Do nothing, hand is played.
-                self.status = 'Stood'
-
-            elif action == 'Double':
-                print('Doubling...')   # Deal another card and print. Hand is played.
-                self.double(shoe)
-                self.status = 'Doubled'
-
-            elif action == 'Split':
-                print('Splitting...')  # Put second card into a new hand, keep playing this hand 
-                self.split()
-                continue
-
-            else:
-                raise Exception('Unhandled response.')
-
-            # If the hand is 21 or busted, the hand is done being played.
-            if self.is_21():
-                print('21!')
-                self.status = 'Stood'
-            elif self.is_busted():
-                print('Busted!')
-                self.status = 'Busted'
-
-    def payout(self, kind, odds=None):
-        
-        # Validate args passed in
-        if kind in ('wager', 'insurance'):
-            assert odds, 'Must specify odds for wager payouts!'
-
-        if kind == 'wager':
-            self._perform_payout('winning_wager', odds)
-            self._perform_payout('wager_reclaim')
-        
-        elif kind == 'insurance':
-            self._perform_payout('winning_insurance', odds)
-            self._perform_payout('insurance_reclaim')
-        
-        elif kind == 'push':
-            self._perform_payout('wager_reclaim')
-        
-        else:
-            raise ValueError(f"Invalid payout kind: '{kind}'")
-
-    def _perform_payout(self, kind, odds=None):
-
-        # Validate args passed in
-        if kind in ('winning_wager', 'winning_insurance'):
-            assert odds, 'Must specify odds for wager payouts!'
-            antecedent, consequent = map(int, odds.split(':'))
-        
-        # Really wish python had case statements...
-        if kind == 'winning_wager':
-            amount = self.wager * antecedent / consequent
-            message = f"Adding winning hand payout of ${amount} to bankroll."
-        
-        elif kind == 'wager_reclaim':
-            amount = self.wager
-            message = f"Reclaiming hand wager of ${amount}."
-        
-        elif kind == 'winning_insurance':
-            amount = self.insurance * antecedent / consequent
-            message = f"Adding winning insurance payout of ${amount} to bankroll."
-        
-        elif kind == 'insurance_reclaim':
-            amount = self.insurance
-            message = f"Reclaiming insurance wager of ${amount}."
-
-        else:
-            raise ValueError(f"Invalid payout kind: '{kind}'")
-
-        self.player.payout(amount, message)
-
-    def settle_up(self, dealer_hand):
-        print(f"\n[ Hand {self.hand_number} ]")
-
-        if self.status == 'Busted':
-            print('Outcome: LOSS')
-            print(f"${self.wager} hand wager lost.")
-
-        elif dealer_hand.status == 'Busted':
-            print('Outcome: WIN')
-            self.payout('wager', '1:1')
-        else:
-            hand_total = self.final_total()
-            dealer_hand_total = dealer_hand.final_total()
-
-            if hand_total > dealer_hand_total:
-                print('Outcome: WIN')
-                self.payout('wager', '1:1')
-            elif hand_total == dealer_hand_total:
-                print('Outcome: PUSH')
-                self.payout('push')
-            else:
-                print('Outcome: LOSS')
-                print(f"${self.wager} hand wager lost.")
+        return len(self.cards) == 2
 
 
 class DealerHand(Hand):
@@ -312,8 +127,9 @@ class DealerHand(Hand):
     def up_card(self):
         return self.cards[0]
 
-    def print(self, hide=False):
-        if hide:
+    def pretty_format(self, hide_burried_card=True):
+        """Get a string representation of the hand formatted to be printed."""
+        if hide_burried_card:
             up_card = self.up_card()
             cards = f"Upcard: {up_card}"
             total = f"Total: {up_card.value if up_card.name != 'Ace' else '1 or 11'}"
@@ -327,35 +143,4 @@ class DealerHand(Hand):
             total,
             f"Status: {self.status}"
         ]
-
-        print('\n\t'.join(lines))
-
-    def play(self, shoe):
-
-        self.status = 'Playing'
-
-        while self.status == 'Playing':
-
-            # Display the dealer's cards to the player
-            self.player.table().print(hide_dealer=False, dealer_playing=True)
-            sleep(1)
-
-            # Get the hand total
-            total = self.final_total()
-
-            if total < 17:
-                print('Hitting...')    # Deal another card and keep playing the hand.
-                self.hit(shoe)
-
-            elif total == 17 and self.is_soft():
-                    print('Hitting...')  # Dealer must hit a soft 17
-                    self.hit(shoe)
-            
-            else:
-                print('Stood.')
-                self.status = 'Stood'
-
-            # If the hand is busted, it's over. Otherwise, sleep so the user can see the card progression
-            if self.is_busted():
-                print('Busted!')
-                self.status = 'Busted'
+        return '\n\t'.join(lines)

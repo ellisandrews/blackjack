@@ -88,8 +88,8 @@ class GameController:
         # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
         self.gambler.place_auto_wager()
 
-        # Render the game
-        self.add_activity('Dealt hands.')
+        # Log it
+        self.add_activity('\nDealing hands.')
 
     def play_gambler_turn(self):
         """Play the gambler's turn, meaning play all of the gambler's hands to completion."""
@@ -212,7 +212,7 @@ class GameController:
         hand.status = 'Playing'
 
         self.render()
-        sleep(2)
+        sleep(1)
 
         while hand.status == 'Playing':
 
@@ -232,7 +232,7 @@ class GameController:
                 hand.status = 'Busted'
             
             self.render()
-            sleep(2)
+            sleep(1)
 
         # Toggle dealer_playing display option back to False and re-render
         self.dealer_playing = False
@@ -516,17 +516,35 @@ class GameController:
         # Re-render the game
         self.render()
 
+    def game_over(self):
+        # Show game over message
+        print(header('GAME OVER'))
+
+        # Print a final message after the gambler is finished
+        if self.gambler.auto_wager == 0:    
+            action = f"{self.gambler.name} cashed out with bankroll: ${self.gambler.bankroll}."
+            message = 'Thanks for playing!'
+        else:
+            action = f"{self.gambler.name} is out of money."
+            message = 'Better luck next time!'
+
+        # Calculate the gambler's winnings in total and as a percent change
+        gross_winnings = self.gambler.gross_winnings()
+        pct_winnings = self.gambler.pct_winnings()
+        print(f"{action}\nWinnings: ${gross_winnings} ({pct_winnings}%)\n\n{message}\n")
+
     def play(self):
+        """Main game loop that controls entire game flow."""
 
         while not self.gambler.is_finished():
 
             # Initialize the activity log for the turn
-            self.add_activity('--- New Turn ---\n')
+            self.add_activity('--- New Turn ---')
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
             self.check_gambler_wager()
             if self.gambler.is_finished():  # If they cashed out, don't play the turn. The game is over.
-                return
+                break
 
             # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
             self.deal()
@@ -552,3 +570,6 @@ class GameController:
 
             # Discard hands and pause execution until the user elects to proceed with the next turn.
             self.finalize_turn()
+
+        # Print a game over message
+        self.game_over()

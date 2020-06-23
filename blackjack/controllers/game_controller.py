@@ -38,21 +38,17 @@ class GameController:
             # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
             self.deal()
 
-            # Carry out pre-turn flow (for blackjacks, insurance, etc). If either player had blackjack, there is no turn to play.
-            turn_over = self.play_pre_turn()
-            if turn_over:
-                self.finalize_turn()
-                continue
+            # Carry out pre-turn flow (for blackjacks, insurance, etc).
+            self.play_pre_turn()
             
-            # Play the gambler's turn.
-            play_dealer_turn = self.play_gambler_turn()
+            # Play the gambler's turn (if necessary).
+            self.play_gambler_turn()
             
             # Toggle the dealer display option to show the dealer's hand
             self.hide_dealer = False
 
-            # Play the dealer's turn if necessary.
-            if play_dealer_turn:
-                self.play_dealer_turn()
+            # Play the dealer's turn (if necessary).
+            self.play_dealer_turn()
 
             # Settle gambler hand wins and losses.
             self.settle_up()
@@ -133,16 +129,10 @@ class GameController:
 
     def play_gambler_turn(self):
         """Play the gambler's turn, meaning play all of the gambler's hands to completion."""
-        
-        self.add_activity(f"Playing {self.gambler.name}'s turn.")
-        
         # Use a while loop due to the fact that self.hands can grow while iterating (via splitting)
         while any(hand.status == 'Pending' for hand in self.gambler.hands):
             hand = next(hand for hand in self.gambler.hands if hand.status == 'Pending')  # Grab the next unplayed hand
             self.play_gambler_hand(hand)
-        
-        # Return True if the dealer's hand needs to be played, False otherwise
-        return any(hand.status in ('Doubled', 'Stood') for hand in self.gambler.hands)
 
     def play_gambler_hand(self, hand):
         """Play a gambler hand."""
@@ -154,17 +144,23 @@ class GameController:
 
         while hand.status == 'Playing':
 
-            # If the hand resulted from splitting, hit it automatically.
+            # Handle single-card hands that result from splitting
             if len(hand.cards) == 1:
                 
+                # Hit the hand automatically to make it complete and re-render
                 self.hit_hand(hand)
                 self.render()
 
-                # Split Aces only get 1 more card.
+                # Check if the hand is blackjack. If it is, it's an automatic win (we know dealer doesn't have blackjack)
+                if hand.is_blackjack():
+                    hand.status = 'Blackjack'
+                    hand.set_outcome('Win')
+                    self.render()
+                    break
+
+                # Split Aces only get 1 more card by rule. If they're not a blackjack mark them as stood.
                 if hand.cards[0].is_ace():
-                    if hand.is_blackjack():
-                        hand.status = 'Blackjack'
-                    else:
+                    if hand.status != 'Blackjack':
                         hand.status = 'Stood'
                     self.render()
                     break
@@ -193,6 +189,7 @@ class GameController:
                 hand.status = 'Stood'
             elif hand.is_busted():
                 hand.status = 'Busted'
+                hand.set_outcome('Loss')
 
             # Re-render to show the outcome of the action taken
             self.render()
@@ -235,11 +232,16 @@ class GameController:
         self.gambler.hands.append(new_hand)  # Add the hand to the gambler's list of hands
 
     def double_hand(self, hand):
+        """Double a hand, meaning double the wager on it and hit it with one more card."""
         self.gambler.place_hand_wager(hand.wager, hand)  # Double the wager on the hand
         self.hit_hand(hand)  # Add another card to the hand from the shoe
 
     def play_dealer_turn(self):
-        
+        """Play the dealer's turn (if necessary)."""
+        # The dealer's turn need only be played if there are gambler hands that are still active
+        if not any(hand.status in ('Doubled', 'Stood') for hand in self.gambler.hands):
+            return
+
         # Toggle dealer display options
         self.hide_dealer = False
         
@@ -289,8 +291,6 @@ class GameController:
     def play_pre_turn(self):
         """
         Carry out pre-turn flow for blackjacks and insurance.
-        Return:
-            turn_over (bool) - True if the player's turn is over, False if it needs to be played.
         """
         # --- BLACKJACK CHECKING FOR PRE-TURN FLOW --- #
 
@@ -304,11 +304,6 @@ class GameController:
 
         # Check if the dealer has blackjack, but don't display it to the gambler yet.
         dealer_has_blackjack = self.dealer.hand.is_blackjack()
-        if dealer_has_blackjack:
-            self.dealer.hand.status = 'Blackjack'
-
-        # If either player has blackjack, no further turn will be played.
-        turn_over = gambler_has_blackjack or dealer_has_blackjack
 
         # --- DEALER ACE PRE-TURN FLOW --- #
 
@@ -323,17 +318,17 @@ class GameController:
 
                 if self.wants_even_money() == 'yes':
                     # Pay out even money (meaning 1:1 hand wager) and show what the dealer had.
+                    gambler_hand.set_outcome('Even Money')
                     self.add_activity(f"{self.gambler.name} took even money.")
-                    self.pay_out_hand(gambler_hand, 'wager')
                 else:
                     if dealer_has_blackjack:
                         # Both players have blackjack. Gambler reclaims their wager and that's all.
+                        gambler_hand.set_outcome('Push')
                         self.add_activity('Dealer has blackjack.', 'Hand is a push.')
-                        self.pay_out_hand(gambler_hand, 'push')
                     else:
                         # Dealer does not have blackjack. Gambler has won a blackjack (which pays 3:2)
+                        gambler_hand.set_outcome('Win')
                         self.add_activity('Dealer does not have blackjack.', f"{self.gambler.name} wins 3:2.")
-                        self.pay_out_hand(gambler_hand, 'blackjack')
 
             # If the gambler does not have blackjack they can buy insurance.
             else:
@@ -348,8 +343,8 @@ class GameController:
                     # The turn is over if the dealer has blackjack. Otherwise, continue on to playing the hand.
                     if dealer_has_blackjack:
                         self.hide_dealer = False  # Show the dealer's blackjack.
+                        gambler_hand.set_outcome('Insurance Win')
                         self.add_activity('Dealer has blackjack.', f"{self.gambler.name}'s insurnace wager wins 2:1 (hand wager loses).")
-                        self.pay_out_hand(gambler_hand, 'insurance')
                     else:
                         self.add_activity('Dealer does not have blackjack.', f"{self.gambler.name}'s insurance wager loses.")
 
@@ -363,6 +358,7 @@ class GameController:
                     if dealer_has_blackjack:
                         self.hide_dealer = False
                         self.add_activity('Dealer has blackjack.', f"{self.gambler.name} loses the hand.")
+                        gambler_hand.set_outcome('Loss')
                     else:
                         self.add_activity('Dealer does not have blackjack.')
 
@@ -382,9 +378,10 @@ class GameController:
 
                 if gambler_has_blackjack:
                     self.add_activity('Hand is a push.')
-                    self.pay_out_hand(gambler_hand, 'push')
+                    gambler_hand.set_outcome('Push')
                 else:
                     self.add_activity(f"{self.gambler.name} loses the hand.")
+                    gambler_hand.set_outcome('Loss')
 
             # If dealer doesn't have blackjack, the player wins if they have blackjack. Otherwise, play the turn.
             else:
@@ -392,7 +389,7 @@ class GameController:
                 
                 if gambler_has_blackjack:
                     self.add_activity(f"{self.gambler.name} wins 3:2.")
-                    self.pay_out_hand(gambler_hand, 'blackjack')
+                    gambler_hand.set_outcome('Win')
 
         # --- REGULAR PRE-TURN FLOW --- #
 
@@ -401,9 +398,7 @@ class GameController:
         else:
             if gambler_has_blackjack:
                 self.add_activity(f"{self.gambler.name} wins 3:2.")
-                self.pay_out_hand(gambler_hand, 'blackjack')
-
-        return turn_over
+                gambler_hand.set_outcome('Win')
 
     def pay_out_hand(self, hand, payout_type):
         
@@ -458,38 +453,38 @@ class GameController:
             raise ValueError(f"Invalid payout type: '{payout_type}'")
 
         self.gambler.payout(amount)
-        self.add_activity(message)
+        self.add_activity(f"Hand {hand.hand_number}: {message}")
 
     def settle_hand(self, hand):
         """Settle any outstanding wagers on a hand (relative to the dealer's hand)."""
-        self.add_activity(f"\n[ Hand {hand.hand_number} ]")
+        # Determine the outcome of the hand against the dealer's if the outcome is unknown
+        if not hand.outcome:
+            hand.determine_outcome(self.dealer.hand)
 
-        # If the gambler's hand is busted, it's a loss regardless
-        if hand.status == 'Busted':
-            self.add_activity('Outcome: LOSS', f"${hand.wager} hand wager lost.")
-
-        # If the dealer's hand is busted, it's a win (given that we've already checked for gambler hand bust)
-        elif self.dealer.hand.status == 'Busted':
-            self.add_activity('Outcome: WIN')
-            self.pay_out_hand(hand, 'wager')
-        
-        # If neither gambler nor dealer hand is busted, compare totals to determine wins and losses.
-        else:
-            hand_total = hand.final_total()
-            dealer_hand_total = self.dealer.hand.final_total()
-
-            if hand_total > dealer_hand_total:
-                self.add_activity('Outcome: WIN')
-                self.pay_out_hand(hand, 'wager')
-            elif hand_total == dealer_hand_total:
-                self.add_activity('Outcome: PUSH')
-                self.pay_out_hand(hand, 'push')
+        # Perform payout based on the hand outcome
+        if hand.outcome == 'Win':
+            if hand.status == 'Blackjack':
+                self.pay_out_hand(hand, 'blackjack')
             else:
-                self.add_activity('Outcome: LOSS', f"${hand.wager} hand wager lost.")
+                self.pay_out_hand(hand, 'wager')
+
+        elif hand.outcome == 'Push':
+            self.pay_out_hand(hand, 'push')
+
+        elif hand.outcome == 'Even Money':
+            self.pay_out_hand(hand, 'wager')
+
+        elif hand.outcome == 'Insurance Win':
+            self.pay_out_hand(hand, 'insurance')
+
+        elif hand.outcome == 'Loss':
+            self.add_activity(f"Hand {hand.hand_number}: Forfeiting hand wager of ${hand.wager}.")
+
+        else:
+            raise ValueError(f"Unhandled hand outcome: {hand.outcome}")
 
     def settle_up(self):
         """For each of the gambler's hands, settle wagers against the dealer's hand."""
-        self.add_activity('\n--- Outcomes ---')
         for hand in self.gambler.hands:
             self.settle_hand(hand)
 

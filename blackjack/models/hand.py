@@ -4,6 +4,9 @@ class Hand:
         self.cards = cards or []  # Card order matters for consistent display
         self.status = status
 
+        if self.is_blackjack():
+            self.status = 'Blackjack'
+
     def __str__(self):
         return ' | '.join(str(card) for card in self.cards)
 
@@ -84,14 +87,12 @@ class Hand:
 
 class GamblerHand(Hand):
 
-    def __init__(self, cards=None, status='Pending', wager=0, insurance=0, hand_number=1):
+    def __init__(self, cards=None, status='Pending', wager=0, insurance=0, hand_number=1, outcome=None):
         super().__init__(cards, status)
         self.wager = wager
         self.insurance = insurance
         self.hand_number = hand_number
-
-        if self.is_blackjack():
-            self.status = 'Blackjack'
+        self.outcome = outcome
 
     def pretty_format(self):
         """Get a string representation of the hand formatted to be printed."""
@@ -100,7 +101,8 @@ class GamblerHand(Hand):
             f"Cards: {self}",
             f"Total: {self.get_total_to_display()}",
             f"Wager: ${self.wager}",
-            f"Status: {self.status}"
+            f"Status: {self.status}",
+            f"Outcome: {self.outcome}"
         ]
         return '\n\t'.join(lines)
 
@@ -120,6 +122,34 @@ class GamblerHand(Hand):
         1) Hand is made up of two cards.
         """
         return len(self.cards) == 2
+
+    def set_outcome(self, outcome):
+        """Set the outcome of the hand, and change the status if applicable."""
+        self.outcome = outcome
+        if self.status == 'Pending':
+            self.status = 'Played'
+
+    def determine_outcome(self, dealer_hand):
+        """Determine the hand's outcome against a dealer hand if it is not yet known."""
+        # If the hand is busted it's a loss
+        if self.status == 'Busted':
+            self.set_outcome('Loss')
+
+        # If the hand is not busted and the dealer's hand is busted it's a win
+        elif dealer_hand.status == 'Busted':
+            self.set_outcome('Win')
+
+        # If neither gambler nor dealer hand is busted, compare totals to determine wins and losses.
+        else:
+            hand_total = self.final_total()
+            dealer_hand_total = dealer_hand.final_total()
+
+            if hand_total > dealer_hand_total:
+                self.set_outcome('Win')
+            elif hand_total == dealer_hand_total:
+                self.set_outcome('Push')
+            else:
+                self.set_outcome('Loss')
 
 
 class DealerHand(Hand):

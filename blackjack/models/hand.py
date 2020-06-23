@@ -127,20 +127,22 @@ class DealerHand(Hand):
     def up_card(self):
         return self.cards[0]
 
-    def pretty_format(self, hide_burried_card=True):
+    def pretty_format(self, hide=True):
         """Get a string representation of the hand formatted to be printed."""
-        if hide_burried_card:
+        if hide:
             up_card = self.up_card()
             cards = f"Upcard: {up_card}"
             total = f"Total: {up_card.value if up_card.name != 'Ace' else '1 or 11'}"
+            status = 'Status: Pending'
         else:
             cards = f"Cards: {self}"
             total = f"Total: {self.get_total_to_display()}"
+            status = f"Status: {self.status}"
 
         lines = [
             'Hand:',
             cards,
             total,
-            f"Status: {self.status}"
+            status
         ]
         return '\n\t'.join(lines)

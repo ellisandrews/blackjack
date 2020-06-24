@@ -8,11 +8,11 @@ class BaseInputController(ABC):
     """
 
     @abstractstaticmethod
-    def check_gambler_wager(gambler):
+    def check_wager():
         """Get a yes/no response for whether the gambler wants to change their auto-wager."""
 
     @abstractstaticmethod
-    def get_new_auto_wager(gambler):
+    def get_new_auto_wager():
         """Get a new auto-wager amount (float)."""
 
     @abstractstaticmethod

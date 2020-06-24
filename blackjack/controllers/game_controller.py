@@ -33,7 +33,7 @@ class GameController:
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
             self.check_gambler_wager()
-            if self.gambler.bankroll == 0:  # If they cashed out, don't play the turn. The game is over.
+            if self.gambler.auto_wager == 0:  # If they cashed out, don't play the turn. The game is over.
                 break
 
             # Deal 2 cards from the shoe to the gambler's and the dealer's hands. Place the gambler's auto-wager on the hand.
@@ -70,7 +70,7 @@ class GameController:
         if self.gambler.can_place_auto_wager():
 
             # Collect a yes/no response about changing wager from the InputController
-            change_auto_wager = self.input_controller.check_gambler_wager(self.gambler)
+            change_auto_wager = self.input_controller.check_wager()
             
             # If they want to make a change, make it
             if change_auto_wager == 'yes':
@@ -90,7 +90,7 @@ class GameController:
         success = False
         while not success:
             # Get the new auto-wager from the InputController
-            new_auto_wager = self.input_controller.get_new_auto_wager(self.gambler)
+            new_auto_wager = self.input_controller.get_new_auto_wager()
 
             # This validates that they've entered a wager <= their bankroll
             try:
@@ -467,22 +467,26 @@ class GameController:
             self.settle_hand(hand)
 
     def render_table(self):
-        """Print out the hands of cards, if they've been dealt."""
+        """Print out the players and the hands of cards (if they've been dealt)."""
         print(header('TABLE'))
+        
+        # Print the dealer's hand. If `hide_dealer` is True, don't factor in the dealer's buried card.
+        num_dashes = len(self.dealer.name) + 6
+        print(f"{'-'*num_dashes}\n   {self.dealer.name.upper()}   \n{'-'*num_dashes}\n")
         if self.dealer.hand:
-            # Print the dealer's hand. If `hide_dealer` is True, don't factor in the dealer's buried card.
-            num_dashes = len(self.dealer.name) + 6
-            print(f"{'-'*num_dashes}\n   {self.dealer.name.upper()}   \n{'-'*num_dashes}\n")
             print(self.dealer.hand.pretty_format(hide=self.hide_dealer))
+        else:
+            print('No hand.')
 
-            # Print the gambler's hand(s)
-            num_dashes = len(self.gambler.name) + 6
-            print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}")
+        # Print the gambler's hand(s)
+        num_dashes = len(self.gambler.name) + 6
+        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}  |  Auto-Wager: ${self.gambler.auto_wager}\n")
+        if self.gambler.hands:
             for hand in self.gambler.hands:
                 print(hand.pretty_format())
-            print()
+                print()
         else:
-            print('No hands dealt yet.')
+            print('No hands.')
 
     def render_activity(self):
         """Print out the activity log for the current turn."""

@@ -8,19 +8,19 @@ class UserInputController(BaseInputController):
     """InputController that receives input via a command line prompt."""
 
     @staticmethod
-    def check_gambler_wager(gambler):
+    def check_wager():
         """Get a yes/no response for whether the gambler wants to change their auto-wager."""
         # Ask if the gambler wants to cash out or change their auto-wager
         return get_user_input(
-            f"Change your auto-wager or cash out? (Bankroll: ${gambler.bankroll}; Auto-Wager: ${gambler.auto_wager}) (y/n) => ", 
+            'Change your auto-wager or cash out? (y/n) => ',
             yes_no_response
         )
    
     @staticmethod
-    def get_new_auto_wager(gambler):
+    def get_new_auto_wager():
         """Get a new auto-wager amount (float)."""
         return get_user_input(
-            f"Please enter an auto-wager amount (Bankroll: ${gambler.bankroll}; enter $0 to cash out): $",
+            'Please enter an auto-wager amount (Enter $0 to cash out): $',
             float_response
         )
 

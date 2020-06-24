@@ -98,7 +98,7 @@ class GamblerHand(Hand):
     def pretty_format(self):
         """Get a string representation of the hand formatted to be printed."""
         lines = [
-            f"\nHand {self.hand_number}:",
+            f"Hand {self.hand_number}:",
             f"Cards: {self}",
             f"Total: {self.get_total_to_display()}",
             f"Wager: ${self.wager}",

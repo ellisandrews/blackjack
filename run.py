@@ -4,7 +4,7 @@ from blackjack.models.deck import Deck
 from blackjack.models.gambler import Gambler
 from blackjack.models.shoe import Shoe
 from blackjack.user_input import get_user_input, float_response, int_response
-from blackjack.utils import header
+from blackjack.utils import clear, header
 
 
 def get_setup_input():
@@ -47,6 +47,9 @@ def setup_shoe(number_of_decks):
 
 def setup_game(from_user_input=True):
 
+    # Show welcome message
+    print(header('GAME SETUP'))
+
     # Ask the user for game setup data, or use a default schema
     if from_user_input:
         setup_data = get_setup_input()
@@ -80,18 +83,11 @@ def setup_game(from_user_input=True):
 
 if __name__ == '__main__':
 
-    print(header('WELCOME TO THE BLACKJACK TABLE'))
+    # Clear the terminal screen.
+    clear()
 
     # Set up the game.
     game = setup_game(from_user_input=False)  # Delete `from_user_input` arg for final version!
 
     # Run the game loop.
     game.play()
-
-    # Print a final message after the gambler is finished
-    if game.gambler.auto_wager == 0:    
-        print(f"\n{game.gambler.name} cashed out with bankroll: ${game.gambler.bankroll}. Thanks for playing!")
-    else:
-        print(f"\n{game.gambler.name} is out of money. Better luck next time!")
-
-    print(header('GAME OVER'))

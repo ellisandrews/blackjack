@@ -63,19 +63,16 @@ class GameController:
     def check_gambler_wager(self):
         """
         Pre-turn vetting of the gambler's wager.
-        1. Check whether the gambler has enough bankroll to place their auto-wager. If not, make them enter a new one.
+        1. Check whether the gambler has enough bankroll to place their auto-wager. If not, set to remaining bankroll.
         2. Ask the gambler if they'd like to change their auto-wager or cash out. Allow them to do so.
         """
-        # Check if the gambler still has sufficient bankroll to place the auto-wager
-        if self.gambler.can_place_auto_wager():
+        # If the gambler doesn't have sufficient bankroll to place their auto-wager, set their auto-wager to their remaining bankroll.
+        if not self.gambler.can_place_auto_wager():
+            self.gambler.set_new_auto_wager(self.gambler.bankroll)
+            self.add_activity(f"Insufficient bankroll to place current auto-wager. Setting auto-wager to remaining bankroll.")
 
-            # Check whether the user wants to change their auto-wager
-            if self.strategy.wants_to_change_wager():
-                self.set_new_auto_wager()
-
-        # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
-        else:
-            print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager})")
+        # Check whether the user wants to change their auto-wager or cash out.
+        if self.strategy.wants_to_change_wager():
             self.set_new_auto_wager()
 
     def set_new_auto_wager(self):
@@ -86,7 +83,7 @@ class GameController:
         # Ask the gambler for a new auto wager and set it, with some validation.
         success = False
         while not success:
-            # Get the new auto-wager from the InputController
+            # Get the new auto-wager from the strategy
             new_auto_wager = self.strategy.get_new_auto_wager()
 
             # This validates that they've entered a wager <= their bankroll

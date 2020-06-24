@@ -1,20 +1,21 @@
 from collections import OrderedDict
-from functools import partial
 from time import sleep
 
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.user_input import choice_response, float_response, get_user_input, max_retries_exit, yes_no_response
 from blackjack.utils import clear, header
 
 
 class GameController:
 
-    def __init__(self, gambler, dealer, shoe):
+    def __init__(self, gambler, dealer, shoe, input_controller):
         # Configured models from game setup
         self.gambler = gambler
         self.dealer = dealer
         self.shoe = shoe
+
+        # Configured instance of an InputController for in-game decision making
+        self.input_controller = input_controller
 
         # Turn-by-turn activity log
         self.activity = []
@@ -68,44 +69,35 @@ class GameController:
         # Check if the gambler still has sufficient bankroll to place the auto-wager
         if self.gambler.can_place_auto_wager():
 
-            # Ask if the gambler wants to cash out or change their auto-wager
-            response = get_user_input(
-                f"{self.gambler.name}, change your auto-wager or cash out? (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager}) (y/n) => ", 
-                yes_no_response
-            )
+            # Collect a yes/no response about changing wager from the InputController
+            change_auto_wager = self.input_controller.check_gambler_wager(self.gambler)
             
             # If they want to make a change, make it
-            if response == 'yes':
-                self.set_new_auto_wager_from_input()
+            if change_auto_wager == 'yes':
+                self.set_new_auto_wager()
 
         # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
         else:
             print(f"Insufficient bankroll to place current auto-wager (Bankroll: ${self.gambler.bankroll}; Auto-Wager: ${self.gambler.auto_wager})")
-            self.set_new_auto_wager_from_input()
+            self.set_new_auto_wager()
 
-    def set_new_auto_wager_from_input(self, retries=3):
-        """Set a new auto-wager amount from user input (with input vetting and retry logic)."""
-        # Set their auto_wager to $0
+    def set_new_auto_wager(self):
+        """Set a new auto-wager amount."""
+        # Set the gambler's auto_wager to $0.
         self.gambler.zero_auto_wager()
 
-        # Ask them for a new auto wager and set it, with some validation
-        attempts = 0
-        success = False        
-        while not success and attempts < retries:
-            # This validates that they've entered a float
-            new_auto_wager = get_user_input(f"Please enter an auto-wager amount (Bankroll: ${self.gambler.bankroll}; enter $0 to cash out): $", float_response)
-            
+        # Ask the gambler for a new auto wager and set it, with some validation.
+        success = False
+        while not success:
+            # Get the new auto-wager from the InputController
+            new_auto_wager = self.input_controller.get_new_auto_wager(self.gambler)
+
             # This validates that they've entered a wager <= their bankroll
             try:
                 self.gambler.set_new_auto_wager(new_auto_wager)
                 success = True
-            except InsufficientBankrollError as e:
-                print(f"{e}. Please try again.")
-                attempts += 1
-
-        # If they've unsuccessfully tried to enter input the maximum number of times, exit the program
-        if attempts == retries and not success:
-            max_retries_exit()
+            except InsufficientBankrollError as err:
+                print(f"{err}. Please try again.")
 
     def deal(self):
         """Deal cards from the Shoe to both the gambler and the dealer to form their initial hands."""
@@ -165,8 +157,11 @@ class GameController:
                     self.render()
                     break
 
-            # Get the gambler's action from input
-            action = self.get_gambler_hand_action(hand)
+            # Get the possible options for hand action to take.
+            options = self.get_hand_options(hand)
+
+            # Get the gambler's action (e.g. 'Hit', 'Stand', etc.)
+            action = self.input_controller.get_hand_action(hand, options, self.dealer.up_card())
 
             if action == 'Hit':
                 self.hit_hand(hand)     # Deal another card and keep playing the hand.
@@ -194,8 +189,8 @@ class GameController:
             # Re-render to show the outcome of the action taken
             self.render()
 
-    def get_gambler_hand_action(self, hand):
-        """List action options for the user on the hand, and get their choice."""
+    def get_hand_options(self, hand):
+        """Get the options (available actions) that can be taken on a hand."""
         # Default options that are always available
         options = OrderedDict([('h', 'Hit'), ('s', 'Stand')])
 
@@ -207,17 +202,7 @@ class GameController:
         if hand.is_splittable() and self.gambler.can_place_wager(hand.wager):
             options['x'] = 'Split'
 
-        # Formatted options to display to the user
-        display_options = [f"{option} ({abbreviation})" for abbreviation, option in options.items()]
-
-        # Ask what the user would like to do, given their options
-        response = get_user_input(
-            f"[ Hand {hand.hand_number} ] What would you like to do? [ {' , '.join(display_options)} ] => ",
-            partial(choice_response, choices=options.keys())
-        )
-
-        # Return the user's selection ('hit', 'stand', etc.)
-        return options[response]
+        return options
 
     def hit_hand(self, hand):
         """Add a card to a hand from the shoe."""
@@ -276,14 +261,6 @@ class GameController:
             self.render()
             sleep(1)
 
-    @staticmethod
-    def wants_even_money():
-        return get_user_input("Take even money? (y/n) => ", yes_no_response)
-
-    @staticmethod
-    def wants_insurance():
-        return get_user_input("Insurance? (y/n) => ", yes_no_response)
-
     def discard_hands(self):
         self.gambler.discard_hands()
         self.dealer.discard_hand()
@@ -316,7 +293,7 @@ class GameController:
             # If the gambler has blackjack, they can either take even money or let it ride.
             if gambler_has_blackjack:
 
-                if self.wants_even_money() == 'yes':
+                if self.input_controller.wants_even_money() == 'yes':
                     # Pay out even money (meaning 1:1 hand wager).
                     gambler_hand.set_outcome('Even Money')
                     self.add_activity(f"{self.gambler.name} took even money.")
@@ -335,7 +312,7 @@ class GameController:
                 # Gambler must have sufficient bankroll to place an insurance bet.
                 gambler_can_afford_insurance = self.gambler.can_place_insurance_wager()
 
-                if gambler_can_afford_insurance and self.wants_insurance() == 'yes':
+                if gambler_can_afford_insurance and self.input_controller.wants_insurance() == 'yes':
 
                     # Insurnace is a side bet that is half their wager, and pays 2:1 if dealer has blackjack.
                     self.gambler.place_insurance_wager()

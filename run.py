@@ -1,9 +1,9 @@
-from blackjack.controllers.user_input_controller import UserInputController
 from blackjack.controllers.game_controller import GameController
 from blackjack.models.dealer import Dealer
 from blackjack.models.deck import Deck
 from blackjack.models.gambler import Gambler
 from blackjack.models.shoe import Shoe
+from blackjack.strategies.user_input_strategy import UserInputStrategy
 from blackjack.user_input import get_user_input, float_response, int_response
 from blackjack.utils import clear, header
 
@@ -77,10 +77,10 @@ def setup_game(from_user_input=True):
     gambler = Gambler(name, bankroll=bankroll, auto_wager=auto_wager)
     dealer = Dealer()
     shoe = setup_shoe(number_of_decks)
-    input_controller = UserInputController()
+    strategy = UserInputStrategy()
 
     # Create the central controller of the game.
-    return GameController(gambler, dealer, shoe, input_controller)
+    return GameController(gambler, dealer, shoe, strategy)
 
 
 if __name__ == '__main__':

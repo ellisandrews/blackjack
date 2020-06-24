@@ -1,16 +1,15 @@
-
 INVALID_RESPONSE = 'invalid'
 
 
 # Response parsing/validating/casting functions
 
 def yes_no_response(response):
-    """Check whether user's keyboard input is a valid yes or no."""
+    """Check whether user's keyboard input is a valid yes or no, and return a boolean."""
     response = response.lower()
     if response in ('y', 'yes'):
-        return 'yes'
+        return True
     elif response in ('n', 'no'):
-        return 'no'
+        return False
     else:
         return INVALID_RESPONSE
 

@@ -8,14 +8,14 @@ from blackjack.utils import clear, header
 
 class GameController:
 
-    def __init__(self, gambler, dealer, shoe, input_controller):
+    def __init__(self, gambler, dealer, shoe, strategy):
         # Configured models from game setup
         self.gambler = gambler
         self.dealer = dealer
         self.shoe = shoe
 
-        # Configured instance of an InputController for in-game decision making
-        self.input_controller = input_controller
+        # Strategy instance for in-game decision making
+        self.strategy = strategy
 
         # Turn-by-turn activity log
         self.activity = []
@@ -69,11 +69,8 @@ class GameController:
         # Check if the gambler still has sufficient bankroll to place the auto-wager
         if self.gambler.can_place_auto_wager():
 
-            # Collect a yes/no response about changing wager from the InputController
-            change_auto_wager = self.input_controller.check_wager()
-            
-            # If they want to make a change, make it
-            if change_auto_wager == 'yes':
+            # Check whether the user wants to change their auto-wager
+            if self.strategy.wants_to_change_wager():
                 self.set_new_auto_wager()
 
         # If they don't have sufficient bankroll to place auto-wager, force them to set a new one.
@@ -90,7 +87,7 @@ class GameController:
         success = False
         while not success:
             # Get the new auto-wager from the InputController
-            new_auto_wager = self.input_controller.get_new_auto_wager()
+            new_auto_wager = self.strategy.get_new_auto_wager()
 
             # This validates that they've entered a wager <= their bankroll
             try:
@@ -161,7 +158,7 @@ class GameController:
             options = self.get_hand_options(hand)
 
             # Get the gambler's action (e.g. 'Hit', 'Stand', etc.)
-            action = self.input_controller.get_hand_action(hand, options, self.dealer.up_card())
+            action = self.strategy.get_hand_action(hand, options, self.dealer.up_card())
 
             if action == 'Hit':
                 self.hit_hand(hand)     # Deal another card and keep playing the hand.
@@ -293,7 +290,7 @@ class GameController:
             # If the gambler has blackjack, they can either take even money or let it ride.
             if gambler_has_blackjack:
 
-                if self.input_controller.wants_even_money() == 'yes':
+                if self.strategy.wants_even_money():
                     # Pay out even money (meaning 1:1 hand wager).
                     gambler_hand.set_outcome('Even Money')
                     self.add_activity(f"{self.gambler.name} took even money.")
@@ -312,7 +309,7 @@ class GameController:
                 # Gambler must have sufficient bankroll to place an insurance bet.
                 gambler_can_afford_insurance = self.gambler.can_place_insurance_wager()
 
-                if gambler_can_afford_insurance and self.input_controller.wants_insurance() == 'yes':
+                if gambler_can_afford_insurance and self.strategy.wants_insurance():
 
                     # Insurnace is a side bet that is half their wager, and pays 2:1 if dealer has blackjack.
                     self.gambler.place_insurance_wager()

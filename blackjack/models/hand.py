@@ -93,6 +93,7 @@ class GamblerHand(Hand):
         self.insurance = insurance
         self.hand_number = hand_number
         self.outcome = outcome
+        self.earnings = 0
 
     def pretty_format(self):
         """Get a string representation of the hand formatted to be printed."""
@@ -102,7 +103,8 @@ class GamblerHand(Hand):
             f"Total: {self.get_total_to_display()}",
             f"Wager: ${self.wager}",
             f"Status: {self.status}",
-            f"Outcome: {self.outcome}"
+            f"Outcome: {self.outcome}",
+            f"Net: ${self.earnings - self.wager - self.insurance}"
         ]
         return '\n\t'.join(lines)
 

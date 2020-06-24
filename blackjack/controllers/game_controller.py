@@ -317,7 +317,7 @@ class GameController:
             if gambler_has_blackjack:
 
                 if self.wants_even_money() == 'yes':
-                    # Pay out even money (meaning 1:1 hand wager) and show what the dealer had.
+                    # Pay out even money (meaning 1:1 hand wager).
                     gambler_hand.set_outcome('Even Money')
                     self.add_activity(f"{self.gambler.name} took even money.")
                 else:
@@ -452,6 +452,7 @@ class GameController:
         else:
             raise ValueError(f"Invalid payout type: '{payout_type}'")
 
+        hand.earnings += amount
         self.gambler.payout(amount)
         self.add_activity(f"Hand {hand.hand_number}: {message}")
 

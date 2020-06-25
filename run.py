@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+
 from blackjack.controllers.game_controller import GameController
 from blackjack.models.dealer import Dealer
 from blackjack.models.deck import Deck
@@ -85,6 +87,14 @@ def setup_game(from_user_input=True):
 
 
 if __name__ == '__main__':
+
+    # # Command line args
+    # parser = ArgumentParser()
+    # parser.add_argument('-m', '--mode', help='Game mode to play', choices=['interactive', 'simulated'])
+    # parser.add_argument('-v', '--verbose', help='Print game output (interactive mode mandates this)', action='store_true')
+    # parser.add_argument('-s', '--strategy', help='Game strategy to use (if not in interactive mode)')
+    # parser.add_argument('-t', '--turns', help='Maximum number of turns (if not in interactive mode)', type=int)
+    # args = parser.parse_args()
 
     # Clear the terminal screen.
     clear()

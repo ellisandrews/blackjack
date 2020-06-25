@@ -49,7 +49,7 @@ def setup_shoe(number_of_decks):
     return shoe
 
 
-def setup_game(from_user_input=True):
+def setup_game(mode, from_user_input=True):
 
     # Show welcome message
     print(header('GAME SETUP'))
@@ -80,7 +80,14 @@ def setup_game(from_user_input=True):
     gambler = Gambler(name, bankroll=bankroll, auto_wager=auto_wager)
     dealer = Dealer()
     shoe = setup_shoe(number_of_decks)
-    strategy = StaticStrategy()   # UserInputStrategy()
+
+    # Instantiate the appropriate strategy
+    if mode == 'interactive':
+        strategy = UserInputStrategy()
+    elif mode == 'simulated':
+        strategy = StaticStrategy()
+    else:
+        raise ValueError(f"Unsupported game mode: {mode}")
 
     # Create the central controller of the game.
     return GameController(gambler, dealer, shoe, strategy)
@@ -88,19 +95,19 @@ def setup_game(from_user_input=True):
 
 if __name__ == '__main__':
 
-    # # Command line args
-    # parser = ArgumentParser()
-    # parser.add_argument('-m', '--mode', help='Game mode to play', choices=['interactive', 'simulated'])
+    # Command line args
+    parser = ArgumentParser()
+    parser.add_argument('-m', '--mode', help='Game mode to play', choices=['interactive', 'simulated'])
     # parser.add_argument('-v', '--verbose', help='Print game output (interactive mode mandates this)', action='store_true')
     # parser.add_argument('-s', '--strategy', help='Game strategy to use (if not in interactive mode)')
     # parser.add_argument('-t', '--turns', help='Maximum number of turns (if not in interactive mode)', type=int)
-    # args = parser.parse_args()
+    args = parser.parse_args()
 
     # Clear the terminal screen.
     clear()
 
     # Set up the game.
-    game = setup_game(from_user_input=False)  # Delete `from_user_input` arg for final version!
+    game = setup_game(mode=args.mode, from_user_input=False)  # Delete `from_user_input` arg for final version!
 
     # Run the game loop.
     game.play()

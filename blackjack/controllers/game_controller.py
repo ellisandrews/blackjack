@@ -6,9 +6,18 @@ from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.utils import clear, header
 
 
+def render_after(instance_method):
+    """Decordator for calling the `render()` instance method after calling an instance method."""
+    def wrapper(self, *args, **kwargs):
+        instance_method(self, *args, **kwargs)
+        if self.verbose:
+            self.render()
+    return wrapper
+
+
 class GameController:
 
-    def __init__(self, gambler, dealer, shoe, strategy):
+    def __init__(self, gambler, dealer, shoe, strategy, verbose):
         # Configured models from game setup
         self.gambler = gambler
         self.dealer = dealer
@@ -21,6 +30,7 @@ class GameController:
         self.activity = []
 
         # Render options
+        self.verbose = verbose       # True to print output, False to suppress
         self.hide_dealer = True      # Switch for showing/hiding the dealer's buried card during rendering
         self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
 
@@ -58,14 +68,12 @@ class GameController:
         # Render a game over message
         self.game_over()
 
+    @render_after
     def add_activity(self, *messages):
-        """Add message(s) to the activity log. This triggers a re-render of the game."""
+        """Add message(s) to the activity log."""
         # Add all messages
         for message in messages:
             self.activity.append(message)
-
-        # Re-render the game
-        self.render()
 
     def check_gambler_wager(self):
         """
@@ -308,19 +316,19 @@ class GameController:
 
         return options
 
+    @render_after
     def hit_hand(self, hand):
-        """Add a card to a hand from the shoe. This triggers a re-render of the game."""
+        """Add a card to a hand from the shoe."""
         card = self.shoe.deal_card()  # Deal a card
         hand.cards.append(card)  # Add the card to the hand
-        self.render()
 
+    @render_after
     def split_hand(self, hand):
         """Split a hand."""
         split_card = hand.cards.pop(1)  # Pop the second card off the hand to make a new hand
         new_hand = GamblerHand(cards=[split_card], hand_number=len(self.gambler.hands) + 1)  # TODO: Do away with hand_number
         self.gambler.place_hand_wager(hand.wager, new_hand)  # Place the same wager on the new hand
         self.gambler.hands.append(new_hand)  # Add the hand to the gambler's list of hands
-        self.render()
 
     def double_hand(self, hand):
         """Double a hand, meaning double the wager on it and hit it with one more card."""
@@ -328,19 +336,17 @@ class GameController:
         self.hit_hand(hand)  # Add another card to the hand from the shoe
         self.set_hand_status(hand, 'Doubled')  # Set the status to Doubled
 
+    @render_after
     def set_hand_status(self, hand, status):
-        """Set a new status for a hand. This triggers a re-render of the game."""
+        """Set a new status for a hand."""
         hand.status = status
-        self.render()
 
+    @render_after
     def set_hand_outcome(self, hand, outcome):
-        """Set the outcome of the hand, and change the status if applicable. This triggers a re-render of the game."""
-        hand.outcome = outcome
-        
+        """Set the outcome of the hand, and change the status if applicable."""
+        hand.outcome = outcome        
         if hand.status == 'Pending':
             hand.status = 'Played'
-
-        self.render()
 
     def play_dealer_turn(self):
         """Play the dealer's turn (if necessary)."""
@@ -361,9 +367,11 @@ class GameController:
         # Set the hand's status to 'Playing', and loop until this status changes.
         self.set_hand_status(hand, 'Playing')
         
-        sleep(2)
-
         while hand.status == 'Playing':
+
+            # Pause for user to follow along if applicable
+            if self.verbose:
+                sleep(1)
 
             # Get the hand total.
             total = hand.final_total()
@@ -379,8 +387,6 @@ class GameController:
             # If the hand is busted dealer is done playing.
             if hand.is_busted():
                 self.set_hand_status(hand, 'Busted')
-            
-            sleep(2)
 
         # Mark the dealer's turn as finished.
         self.dealer_playing = False
@@ -538,6 +544,7 @@ class GameController:
             print('Dealer playing turn...')
 
     def game_over(self):
+        """Print out a final summary message before exiting the game."""
         # Show game over message
         print(header('GAME OVER'))
 
@@ -556,8 +563,9 @@ class GameController:
 
     def finalize_turn(self):
         """Clean up the current turn in preparation for the next turn."""
-        # Render the final status of the turn.
-        self.render()
+        # Render the final status of the turn if applicable.
+        if self.verbose:
+            self.render()
         
         # Reset the activity log for the next turn.
         self.activity = []
@@ -568,12 +576,11 @@ class GameController:
         # Reset hide_dealer for the next turn.
         self.hide_dealer = True
 
-        # Pause exectution until the user wants to proceed.
-        input('Push ENTER to proceed => ')
+        # Pause exectution until the user wants to proceed if applicable.
+        if self.verbose:
+            input('Push ENTER to proceed => ')
 
     def discard_hands(self):
         """Get rid of gambler and dealer hands."""
         self.gambler.discard_hands()
         self.dealer.discard_hand()
-
-# TODO: Make a decorator for whether a given method should trigger a re-render!!

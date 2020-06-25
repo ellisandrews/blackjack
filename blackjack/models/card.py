@@ -42,3 +42,7 @@ class Card:
 
     def is_facecard(self):
         return self.value == 10
+
+    def csv_format(self):
+        """String representation of the card for Strategy CSVs."""
+        return 'A' if self.is_ace() else str(self.value)

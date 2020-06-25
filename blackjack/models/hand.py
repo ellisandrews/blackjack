@@ -98,7 +98,7 @@ class GamblerHand(Hand):
     def pretty_format(self):
         """Get a string representation of the hand formatted to be printed."""
         lines = [
-            f"\nHand {self.hand_number}:",
+            f"Hand {self.hand_number}:",
             f"Cards: {self}",
             f"Total: {self.get_total_to_display()}",
             f"Wager: ${self.wager}",
@@ -124,34 +124,6 @@ class GamblerHand(Hand):
         1) Hand is made up of two cards.
         """
         return len(self.cards) == 2
-
-    def set_outcome(self, outcome):
-        """Set the outcome of the hand, and change the status if applicable."""
-        self.outcome = outcome
-        if self.status == 'Pending':
-            self.status = 'Played'
-
-    def determine_outcome(self, dealer_hand):
-        """Determine the hand's outcome against a dealer hand if it is not yet known."""
-        # If the hand is busted it's a loss
-        if self.status == 'Busted':
-            self.set_outcome('Loss')
-
-        # If the hand is not busted and the dealer's hand is busted it's a win
-        elif dealer_hand.status == 'Busted':
-            self.set_outcome('Win')
-
-        # If neither gambler nor dealer hand is busted, compare totals to determine wins and losses.
-        else:
-            hand_total = self.final_total()
-            dealer_hand_total = dealer_hand.final_total()
-
-            if hand_total > dealer_hand_total:
-                self.set_outcome('Win')
-            elif hand_total == dealer_hand_total:
-                self.set_outcome('Push')
-            else:
-                self.set_outcome('Loss')
 
 
 class DealerHand(Hand):

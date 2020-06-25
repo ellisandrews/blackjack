@@ -7,7 +7,7 @@ from blackjack.utils import clear, header
 
 
 def render_after(instance_method):
-    """Decordator for calling the `render()` instance method after calling an instance method."""
+    """Decorator for calling the `render()` instance method after calling an instance method."""
     def wrapper(self, *args, **kwargs):
         instance_method(self, *args, **kwargs)
         if self.verbose:

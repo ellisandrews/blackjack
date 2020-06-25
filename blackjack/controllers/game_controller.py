@@ -20,8 +20,9 @@ class GameController:
         # Turn-by-turn activity log
         self.activity = []
 
-        # Switch for showing/hiding the dealer's buried card during rendering
-        self.hide_dealer = True
+        # Render options
+        self.hide_dealer = True      # Switch for showing/hiding the dealer's buried card during rendering
+        self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
 
     def play(self):
         """Main game loop that controls entire game flow."""
@@ -44,9 +45,6 @@ class GameController:
             
             # Play the gambler's turn (if necessary).
             self.play_gambler_turn()
-            
-            # Toggle the dealer display option to show the dealer's hand
-            self.hide_dealer = False
 
             # Play the dealer's turn (if necessary).
             self.play_dealer_turn()
@@ -57,8 +55,17 @@ class GameController:
             # Discard hands and pause execution until the user elects to proceed with the next turn.
             self.finalize_turn()
 
-        # Print a game over message
+        # Render a game over message
         self.game_over()
+
+    def add_activity(self, *messages):
+        """Add message(s) to the activity log. This triggers a re-render of the game."""
+        # Add all messages
+        for message in messages:
+            self.activity.append(message)
+
+        # Re-render the game
+        self.render()
 
     def check_gambler_wager(self):
         """
@@ -100,12 +107,8 @@ class GameController:
 
         # Create the Hands from the dealt cards.
         # Deal like they do a casinos --> one card to each player at a time, starting with the gambler.
-        gambler_hand = GamblerHand(cards=[card_1, card_3])
-        dealer_hand = DealerHand(cards=[card_2, card_4])
-        
-        # Assign the dealt hands appropriately
-        self.gambler.hands.append(gambler_hand)
-        self.dealer.hand = dealer_hand
+        self.gambler.hands.append(GamblerHand(cards=[card_1, card_3]))
+        self.dealer.hand = DealerHand(cards=[card_2, card_4])
 
         # Place the gambler's auto-wager on the hand. We've already vetted that they have sufficient bankroll.
         self.gambler.place_auto_wager()
@@ -325,15 +328,31 @@ class GameController:
         self.hit_hand(hand)  # Add another card to the hand from the shoe
         self.set_hand_status(hand, 'Doubled')  # Set the status to Doubled
 
+    def set_hand_status(self, hand, status):
+        """Set a new status for a hand. This triggers a re-render of the game."""
+        hand.status = status
+        self.render()
+
+    def set_hand_outcome(self, hand, outcome):
+        """Set the outcome of the hand, and change the status if applicable. This triggers a re-render of the game."""
+        hand.outcome = outcome
+        
+        if hand.status == 'Pending':
+            hand.status = 'Played'
+
+        self.render()
+
     def play_dealer_turn(self):
         """Play the dealer's turn (if necessary)."""
-        # The dealer's turn need only be played if there are gambler hands that are still active
-        if not any(hand.status in ('Doubled', 'Stood') for hand in self.gambler.hands):
-            return
-
         # Toggle dealer display options
         self.hide_dealer = False
-        
+        self.dealer_playing = True
+
+        # The dealer's turn need only be played if there are gambler hands that are still active
+        if not any(hand.status in ('Doubled', 'Stood') for hand in self.gambler.hands):
+            self.dealer_playing = False
+            return
+
         self.add_activity("Playing the Dealer's turn.")
 
         # Grab the dealer's lone hand to be played
@@ -363,8 +382,11 @@ class GameController:
             
             sleep(2)
 
+        # Mark the dealer's turn as finished.
+        self.dealer_playing = False
+
     def pay_out_hand(self, hand, payout_type):
-        
+        """Pay out hand winnings, including wager reclaim."""
         # Pay out winning hand wagers 1:1 and reclaim the wager
         if payout_type == 'wager':
             self.perform_hand_payout(hand, 'winning_wager', '1:1')
@@ -389,7 +411,7 @@ class GameController:
             raise ValueError(f"Invalid payout type: '{payout_type}'")
 
     def perform_hand_payout(self, hand, payout_type, odds=None):
-
+        """Determine hand winnings and execute the payout."""
         # Validate args passed in
         if payout_type in ('winning_wager', 'winning_insurance'):
             assert odds, 'Must specify odds for wager and insurance payouts!'
@@ -512,6 +534,8 @@ class GameController:
     def render_action(self):
         """Print out the action section that the user interacts with."""
         print(header('ACTION'))
+        if self.dealer_playing:
+            print('Dealer playing turn...')
 
     def game_over(self):
         # Show game over message
@@ -531,49 +555,25 @@ class GameController:
         print(f"{action}\nWinnings: ${gross_winnings} ({pct_winnings}%)\n\n{message}\n")
 
     def finalize_turn(self):
-        # Print the outcome of the turn, showing the dealer.
-        self.hide_dealer = False
+        """Clean up the current turn in preparation for the next turn."""
+        # Render the final status of the turn.
         self.render()
         
-        # Pause exectution until the user wants to proceed.
-        input('Push ENTER to proceed => ')
-
-        # Reset the activity log for the next turn
+        # Reset the activity log for the next turn.
         self.activity = []
 
         # Discard both the gambler and the dealer's hands.
         self.discard_hands()
 
-        # Reset hide_dealer
+        # Reset hide_dealer for the next turn.
         self.hide_dealer = True
+
+        # Pause exectution until the user wants to proceed.
+        input('Push ENTER to proceed => ')
 
     def discard_hands(self):
         """Get rid of gambler and dealer hands."""
         self.gambler.discard_hands()
         self.dealer.discard_hand()
-
-    def add_activity(self, *messages):
-        """Add message(s) to the activity log. This triggers a re-render of the game."""
-        # Add all messages
-        for message in messages:
-            self.activity.append(message)
-
-        # Re-render the game
-        self.render()
-
-    def set_hand_status(self, hand, status):
-        """Set a new status for a hand. This triggers a re-render of the game."""
-        hand.status = status
-        self.render()
-
-    def set_hand_outcome(self, hand, outcome):
-        """Set the outcome of the hand, and change the status if applicable. This triggers a re-render of the game."""
-        hand.outcome = outcome
-        
-        if hand.status == 'Pending':
-            hand.status = 'Played'
-
-        self.render()
-
 
 # TODO: Make a decorator for whether a given method should trigger a re-render!!

@@ -19,3 +19,8 @@ def clear():
 def money_format(money):
     """Format a monetary value as a string."""
     return "${:0,.2f}".format(money).replace('$-', '-$')
+
+
+def pct_format(percent):
+    """Format a percent value as a string."""
+    return "{0:+.2f}%".format(percent)

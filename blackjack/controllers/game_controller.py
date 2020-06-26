@@ -3,7 +3,7 @@ from time import sleep
 
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.utils import clear, header, money_format
+from blackjack.utils import clear, header, money_format, pct_format
 
 
 def render_after(instance_method):
@@ -17,7 +17,7 @@ def render_after(instance_method):
 
 class GameController:
 
-    def __init__(self, gambler, dealer, shoe, strategy, verbose):
+    def __init__(self, gambler, dealer, shoe, strategy, verbose, max_turns=None):
         # Configured models from game setup
         self.gambler = gambler
         self.dealer = dealer
@@ -34,6 +34,9 @@ class GameController:
         self.hide_dealer = True      # Switch for showing/hiding the dealer's buried card during rendering
         self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
 
+        # Max number of turns to play (optional)
+        self.max_turns = max_turns
+
         # Event tracking (for analytics)
         self.turns = 0
         self.wins = 0
@@ -47,10 +50,10 @@ class GameController:
     def play(self):
         """Main game loop that controls entire game flow."""
         
-        while not self.gambler.is_finished():
+        while self.play_condition():
 
             # Initialize the activity log for the turn
-            self.add_activity('New Turn.')
+            self.add_activity(f"Turn #{self.turns + 1}")
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
             self.check_gambler_wager()
@@ -77,6 +80,19 @@ class GameController:
 
         # Render a game over message
         self.game_over()
+
+    def play_condition(self):
+        """Return True to play another turn, False otherwise."""
+        # If the gambler is cashed out or out of money there is no turn to play.
+        if self.gambler.is_finished():
+            return False
+        
+        # If max number of turns imposed make sure we haven't hit it yet.
+        if self.max_turns:
+            return self.turns < self.max_turns
+        
+        # Checks have passed, play the turn.
+        return True
 
     @render_after
     def add_activity(self, *messages):
@@ -559,7 +575,7 @@ class GameController:
         print(header('GAME OVER'))
 
         # Print a final message after the gambler is finished
-        if self.gambler.auto_wager == 0:    
+        if self.gambler.auto_wager == 0 or self.turns == self.max_turns:    
             action = f"{self.gambler.name} cashed out with bankroll: {money_format(self.gambler.bankroll)}."
             message = 'Thanks for playing!'
         else:
@@ -569,7 +585,7 @@ class GameController:
         # Calculate the gambler's winnings in total and as a percent change
         gross_winnings = self.gambler.gross_winnings()
         pct_winnings = self.gambler.pct_winnings()
-        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_winnings}%)\n\n{message}")
+        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})\n\n{message}")
 
         # TODO: Is this where we want this?
         self.render_analytics()
@@ -586,10 +602,10 @@ class GameController:
         insurance_win_pct = round(self.insurance_wins / hands * 100.0, 2)
 
         print(f"Hands: {hands}")
-        print(f"Wins: {self.wins} ({win_pct}%)")
-        print(f"Losses: {self.losses} ({loss_pct}%)")
-        print(f"Pushes: {self.pushes} ({push_pct}%)")
-        print(f"Insurance Wins: {self.insurance_wins} ({insurance_win_pct}%)")
+        print(f"Wins: {self.wins} ({pct_format(win_pct)})")
+        print(f"Losses: {self.losses} ({pct_format(loss_pct)})")
+        print(f"Pushes: {self.pushes} ({pct_format(push_pct)})")
+        print(f"Insurance Wins: {self.insurance_wins} ({pct_format(insurance_win_pct)})")
         print()
         print(f"Player Blackjacks: {self.gambler_blackjacks}")
         print(f"Dealer Blackjacks: {self.dealer_blackjacks}")

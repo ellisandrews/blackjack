@@ -53,9 +53,15 @@ class StaticStrategy(BaseStrategy):
         # Use the appropriate 'soft' or 'hard' hand DataFrame to decide which action should be taken.
         row = hand.final_total()
         if hand.is_soft():
-            return self.soft_df.at[row, column]
+            action = self.soft_df.at[row, column]
         else:
-            return self.hard_df.at[row, column]
+            action = self.hard_df.at[row, column]
+
+        # Handle the edge case where doubling is the recommended action, but the user doesn't have enough money to do so.
+        if action == 'Double' and 'Double' not in options.values():
+            return 'Hit'
+        
+        return action
 
     def wants_even_money(self):
         """Get a yes/no response (bool) for whether a the gambler wants to take even money for a blackjack when facing an Ace."""

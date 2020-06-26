@@ -23,16 +23,26 @@ class GameController:
         self.dealer = dealer
         self.shoe = shoe
 
-        # Strategy instance for in-game decision making
+        # Strategy to employ for in-game decision making
         self.strategy = strategy
 
-        # Turn-by-turn activity log
+        # Turn activity log
         self.activity = []
 
         # Render options
-        self.verbose = verbose       # True to print output, False to suppress
+        self.verbose = verbose       # Switch for printing/suppressing output
         self.hide_dealer = True      # Switch for showing/hiding the dealer's buried card during rendering
         self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
+
+        # Event tracking (for analytics)
+        self.turns = 0
+        self.wins = 0
+        self.losses = 0
+        self.pushes = 0
+        self.insurance_wins = 0
+        self.gambler_blackjacks = 0
+        self.dealer_blackjacks = 0
+        self.bankroll_progression = [self.gambler.bankroll]
 
     def play(self):
         """Main game loop that controls entire game flow."""
@@ -62,7 +72,7 @@ class GameController:
             # Settle gambler hand wins and losses.
             self.settle_up()
 
-            # Discard hands and pause execution until the user elects to proceed with the next turn.
+            # Track events and reset in order to proceed with the next turn.
             self.finalize_turn()
 
         # Render a game over message
@@ -559,7 +569,64 @@ class GameController:
         # Calculate the gambler's winnings in total and as a percent change
         gross_winnings = self.gambler.gross_winnings()
         pct_winnings = self.gambler.pct_winnings()
-        print(f"{action}\nWinnings: ${gross_winnings} ({pct_winnings}%)\n\n{message}\n")
+        print(f"{action}\nWinnings: ${gross_winnings} ({pct_winnings}%)\n\n{message}")
+
+        # TODO: Is this where we want this?
+        self.render_analytics()
+
+    def render_analytics(self):
+        """Run some basic analytics on the tracked events and print them for the user."""
+        # Show analytics header
+        print(header('ANALYTICS'))
+
+        hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
+        win_pct = round(self.wins / hands * 100.0, 2)
+        loss_pct = round(self.losses / hands * 100.0, 2)
+        push_pct = round(self.pushes / hands * 100.0, 2)
+        insurance_win_pct = round(self.insurance_wins / hands * 100.0, 2)
+
+        print(f"Hands: {hands}")
+        print(f"Wins: {self.wins} ({win_pct}%)")
+        print(f"Losses: {self.losses} ({loss_pct}%)")
+        print(f"Pushes: {self.pushes} ({push_pct}%)")
+        print(f"Insurance Wins: {self.insurance_wins} ({insurance_win_pct}%)")
+        print()
+        print(f"Player Blackjacks: {self.gambler_blackjacks}")
+        print(f"Dealer Blackjacks: {self.dealer_blackjacks}")
+        print()
+        print(f"Max Bankroll: ${round(max(self.bankroll_progression), 2)}")
+        print(f"Min Bankroll: ${round(min(self.bankroll_progression), 2)}")
+        print()
+
+    def track_events(self):
+        """Update the tracked events with the current turn's data."""
+        # Track number of turns played
+        self.turns += 1
+        
+        # Track gambler hand events
+        for hand in self.gambler.hands:
+            # Blackjacks
+            if hand.status == 'Blackjack':
+                self.gambler_blackjacks += 1
+
+            # Outcomes
+            if hand.outcome in ('Win', 'Even Money'):
+                self.wins += 1
+            elif hand.outcome == 'Loss':
+                self.losses += 1
+            elif hand.outcome == 'Push':
+                self.pushes += 1
+            elif hand.outcome == 'Insurance Win':
+                self.insurance_wins += 1
+            else:
+                raise ValueError(f"Unhandled hand outcome: {hand.outcome}")
+
+        # Track dealer blackjacks
+        if self.dealer.hand.status == 'Blackjack':
+            self.dealer_blackjacks += 1
+
+        # Track gambler's bankroll through time
+        self.bankroll_progression.append(self.gambler.bankroll)
 
     def finalize_turn(self):
         """Clean up the current turn in preparation for the next turn."""
@@ -567,20 +634,19 @@ class GameController:
         if self.verbose:
             self.render()
         
+        # Update tracked events
+        self.track_events()
+
         # Reset the activity log for the next turn.
         self.activity = []
 
         # Discard both the gambler and the dealer's hands.
-        self.discard_hands()
-
+        self.gambler.discard_hands()
+        self.dealer.discard_hand()
+        
         # Reset hide_dealer for the next turn.
         self.hide_dealer = True
 
         # Pause exectution until the user wants to proceed if applicable.
         if self.verbose:
             input('Push ENTER to proceed => ')
-
-    def discard_hands(self):
-        """Get rid of gambler and dealer hands."""
-        self.gambler.discard_hands()
-        self.dealer.discard_hand()

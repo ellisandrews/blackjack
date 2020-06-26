@@ -596,10 +596,10 @@ class GameController:
         print(header('ANALYTICS'))
 
         hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
-        win_pct = round(self.wins / hands * 100.0, 2)
-        loss_pct = round(self.losses / hands * 100.0, 2)
-        push_pct = round(self.pushes / hands * 100.0, 2)
-        insurance_win_pct = round(self.insurance_wins / hands * 100.0, 2)
+        win_pct = self.wins / hands * 100.0
+        loss_pct = self.losses / hands * 100.0
+        push_pct = self.pushes / hands * 100.0
+        insurance_win_pct = self.insurance_wins / hands * 100.0
 
         print(f"Hands: {hands}")
         print(f"Wins: {self.wins} ({pct_format(win_pct)})")

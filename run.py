@@ -5,7 +5,7 @@ from blackjack.models.dealer import Dealer
 from blackjack.models.deck import Deck
 from blackjack.models.gambler import Gambler
 from blackjack.models.shoe import Shoe
-from blackjack.strategies.static_strategy import StaticStrategy
+from blackjack.strategies.default_static_strategy import DefaultStaticStrategy
 from blackjack.strategies.user_input_strategy import UserInputStrategy
 from blackjack.user_input import get_user_input, float_response, int_response
 from blackjack.utils import clear, header
@@ -106,7 +106,7 @@ def setup_game(mode, verbose, default_setup):
     if mode == 'interactive':
         strategy = UserInputStrategy()
     elif mode == 'simulated':
-        strategy = StaticStrategy()
+        strategy = DefaultStaticStrategy()
     else:
         raise ValueError(f"Unsupported game mode: {mode}")
 

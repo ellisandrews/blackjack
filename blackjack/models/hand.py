@@ -1,3 +1,6 @@
+from blackjack.utils import money_format
+
+
 class Hand:
 
     def __init__(self, cards=None, status='Pending'):
@@ -101,10 +104,10 @@ class GamblerHand(Hand):
             f"Hand {self.hand_number}:",
             f"Cards: {self}",
             f"Total: {self.get_total_to_display()}",
-            f"Wager: ${self.wager}",
+            f"Wager: {money_format(self.wager)}",
             f"Status: {self.status}",
             f"Outcome: {self.outcome}",
-            f"Net: ${self.earnings - self.wager - self.insurance}"
+            f"Net: {money_format(self.earnings - self.wager - self.insurance)}"
         ]
         return '\n\t'.join(lines)
 

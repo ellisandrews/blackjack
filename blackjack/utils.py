@@ -14,3 +14,8 @@ def clear():
     # Mac/Linux 
     else: 
         os.system('clear')
+
+
+def money_format(money):
+    """Format a monetary value as a string."""
+    return "${:0,.2f}".format(money).replace('$-', '-$')

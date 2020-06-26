@@ -3,7 +3,7 @@ from time import sleep
 
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.utils import clear, header
+from blackjack.utils import clear, header, money_format
 
 
 def render_after(instance_method):
@@ -102,7 +102,7 @@ class GameController:
 
     def set_new_auto_wager(self):
         """Set a new auto-wager amount."""
-        # Set the gambler's auto_wager to $0.
+        # Set the gambler's auto_wager to $0.00.
         self.gambler.zero_auto_wager()
 
         # Ask the gambler for a new auto wager and set it, with some validation.
@@ -436,19 +436,19 @@ class GameController:
         # Determine the payout amount by the payout_type (and odds if applicable)
         if payout_type == 'winning_wager':
             amount = hand.wager * antecedent / consequent
-            message = f"Adding winning hand payout of ${amount} to bankroll."
+            message = f"Adding winning hand payout of {money_format(amount)} to bankroll."
         
         elif payout_type == 'wager_reclaim':
             amount = hand.wager
-            message = f"Reclaiming hand wager of ${amount}."
+            message = f"Reclaiming hand wager of {money_format(amount)}."
         
         elif payout_type == 'winning_insurance':
             amount = hand.insurance * antecedent / consequent
-            message = f"Adding winning insurance payout of ${amount} to bankroll."
+            message = f"Adding winning insurance payout of {money_format(amount)} to bankroll."
         
         elif payout_type == 'insurance_reclaim':
             amount = hand.insurance
-            message = f"Reclaiming insurance wager of ${amount}."
+            message = f"Reclaiming insurance wager of {money_format(amount)}."
 
         else:
             raise ValueError(f"Invalid payout type: '{payout_type}'")
@@ -502,7 +502,7 @@ class GameController:
             self.pay_out_hand(hand, 'insurance')
 
         elif hand.outcome == 'Loss':
-            self.add_activity(f"Hand {hand.hand_number}: Forfeiting hand wager of ${hand.wager}.")
+            self.add_activity(f"Hand {hand.hand_number}: Forfeiting hand wager of {money_format(hand.wager)}.")
 
         else:
             raise ValueError(f"Unhandled hand outcome: {hand.outcome}")
@@ -533,7 +533,7 @@ class GameController:
 
         # Print the gambler's hand(s)
         num_dashes = len(self.gambler.name) + 6
-        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}  |  Auto-Wager: ${self.gambler.auto_wager}\n")
+        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: {money_format(self.gambler.bankroll)}  |  Auto-Wager: {money_format(self.gambler.auto_wager)}\n")
         if self.gambler.hands:
             for hand in self.gambler.hands:
                 print(hand.pretty_format())
@@ -560,7 +560,7 @@ class GameController:
 
         # Print a final message after the gambler is finished
         if self.gambler.auto_wager == 0:    
-            action = f"{self.gambler.name} cashed out with bankroll: ${self.gambler.bankroll}."
+            action = f"{self.gambler.name} cashed out with bankroll: {money_format(self.gambler.bankroll)}."
             message = 'Thanks for playing!'
         else:
             action = f"{self.gambler.name} is out of money."
@@ -569,7 +569,7 @@ class GameController:
         # Calculate the gambler's winnings in total and as a percent change
         gross_winnings = self.gambler.gross_winnings()
         pct_winnings = self.gambler.pct_winnings()
-        print(f"{action}\nWinnings: ${gross_winnings} ({pct_winnings}%)\n\n{message}")
+        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_winnings}%)\n\n{message}")
 
         # TODO: Is this where we want this?
         self.render_analytics()
@@ -594,8 +594,8 @@ class GameController:
         print(f"Player Blackjacks: {self.gambler_blackjacks}")
         print(f"Dealer Blackjacks: {self.dealer_blackjacks}")
         print()
-        print(f"Max Bankroll: ${round(max(self.bankroll_progression), 2)}")
-        print(f"Min Bankroll: ${round(min(self.bankroll_progression), 2)}")
+        print(f"Max Bankroll: {money_format(max(self.bankroll_progression))}")
+        print(f"Min Bankroll: {money_format(min(self.bankroll_progression))}")
         print()
 
     def track_events(self):

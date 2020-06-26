@@ -1,4 +1,5 @@
 from blackjack.exc import InsufficientBankrollError, OverdraftError
+from blackjack.utils import money_format
 
 
 class Gambler:
@@ -13,13 +14,13 @@ class Gambler:
         self.initial_bankroll = bankroll
 
     def __str__(self):
-        return f"Player: {self.name} | Bankroll: ${self.bankroll}"
+        return f"Player: {self.name} | Bankroll: {money_format(self.bankroll)}"
 
     def discard_hands(self):
         self.hands = []
 
     def is_finished(self):
-        # Player is finished if they've set their wager to $0, or they're out of money
+        # Player is finished if they've set their wager to $0.00, or they're out of money
         return self.auto_wager == 0 or self.bankroll == 0
 
     def first_hand(self):

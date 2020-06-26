@@ -19,6 +19,7 @@ def get_setup_from_input(mode):
     # Gambler setup data
     name = input("Enter a player name => ")
     bankroll = get_user_input("Enter a bankroll amount => $", float_response)
+    auto_wager = get_user_input("Enter an auto-wager amount => $", float_response)
 
     # Shoe setup data
     number_of_decks = get_user_input("Enter the number of decks to use => ", int_response)
@@ -28,7 +29,7 @@ def get_setup_from_input(mode):
         'gambler': {
             'name': name,
             'bankroll': bankroll,
-            'auto_wager': bankroll / 10  # Start them off with a 10% auto-wager
+            'auto_wager': auto_wager
         },
         'shoe': {
             'number_of_decks': number_of_decks

@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from time import sleep
 
+import matplotlib.pyplot as plt
+
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.utils import clear, header, money_format, pct_format
@@ -78,8 +80,8 @@ class GameController:
             # Track events and reset in order to proceed with the next turn.
             self.finalize_turn()
 
-        # Render a game over message
-        self.game_over()
+        # Render a game over message with analytics
+        self.render_game_over()
 
     def play_condition(self):
         """Return True to play another turn, False otherwise."""
@@ -528,92 +530,6 @@ class GameController:
         for hand in self.gambler.hands:
             self.settle_hand(hand)
 
-    def render(self):
-        """Print out the entire game (comprised of table, activity log, and user action) to the console."""
-        clear()  # Clear previous rendering
-        self.render_table()
-        self.render_activity()
-        self.render_action()
-
-    def render_table(self):
-        """Print out the players and the hands of cards (if they've been dealt)."""
-        print(header('TABLE'))
-        
-        # Print the dealer's hand. If `hide_dealer` is True, don't factor in the dealer's buried card.
-        num_dashes = len(self.dealer.name) + 6
-        print(f"{'-'*num_dashes}\n   {self.dealer.name.upper()}   \n{'-'*num_dashes}\n")
-        if self.dealer.hand:
-            print(self.dealer.hand.pretty_format(hide=self.hide_dealer))
-        else:
-            print('No hand.')
-
-        # Print the gambler's hand(s)
-        num_dashes = len(self.gambler.name) + 6
-        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: {money_format(self.gambler.bankroll)}  |  Auto-Wager: {money_format(self.gambler.auto_wager)}\n")
-        if self.gambler.hands:
-            for hand in self.gambler.hands:
-                print(hand.pretty_format())
-                print()
-        else:
-            print('No hands.')
-
-    def render_activity(self):
-        """Print out the activity log for the current turn."""
-        print(header('ACTIVITY'))
-        for message in self.activity:
-            print(message)
-
-    def render_action(self):
-        """Print out the action section that the user interacts with."""
-        print(header('ACTION'))
-        if self.dealer_playing:
-            print('Dealer playing turn...')
-
-    def game_over(self):
-        """Print out a final summary message before exiting the game."""
-        # Show game over message
-        print(header('GAME OVER'))
-
-        # Print a final message after the gambler is finished
-        if self.gambler.auto_wager == 0 or self.turns == self.max_turns:    
-            action = f"{self.gambler.name} cashed out with bankroll: {money_format(self.gambler.bankroll)}."
-            message = 'Thanks for playing!'
-        else:
-            action = f"{self.gambler.name} is out of money."
-            message = 'Better luck next time!'
-
-        # Calculate the gambler's winnings in total and as a percent change
-        gross_winnings = self.gambler.gross_winnings()
-        pct_winnings = self.gambler.pct_winnings()
-        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})\n\n{message}")
-
-        # TODO: Is this where we want this?
-        self.render_analytics()
-
-    def render_analytics(self):
-        """Run some basic analytics on the tracked events and print them for the user."""
-        # Show analytics header
-        print(header('ANALYTICS'))
-
-        hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
-        win_pct = self.wins / hands * 100.0
-        loss_pct = self.losses / hands * 100.0
-        push_pct = self.pushes / hands * 100.0
-        insurance_win_pct = self.insurance_wins / hands * 100.0
-
-        print(f"Hands: {hands}")
-        print(f"Wins: {self.wins} ({pct_format(win_pct)})")
-        print(f"Losses: {self.losses} ({pct_format(loss_pct)})")
-        print(f"Pushes: {self.pushes} ({pct_format(push_pct)})")
-        print(f"Insurance Wins: {self.insurance_wins} ({pct_format(insurance_win_pct)})")
-        print()
-        print(f"Player Blackjacks: {self.gambler_blackjacks}")
-        print(f"Dealer Blackjacks: {self.dealer_blackjacks}")
-        print()
-        print(f"Max Bankroll: {money_format(max(self.bankroll_progression))}")
-        print(f"Min Bankroll: {money_format(min(self.bankroll_progression))}")
-        print()
-
     def track_events(self):
         """Update the tracked events with the current turn's data."""
         # Track number of turns played
@@ -666,3 +582,97 @@ class GameController:
         # Pause exectution until the user wants to proceed if applicable.
         if self.verbose:
             input('Push ENTER to proceed => ')
+
+    def render(self):
+        """Print out the entire game (comprised of table, activity log, and user action) to the console."""
+        clear()  # Clear previous rendering
+        self.render_table()
+        self.render_activity()
+        self.render_action()
+
+    def render_table(self):
+        """Print out the players and the hands of cards (if they've been dealt)."""
+        print(header('TABLE'))
+        
+        # Print the dealer's hand. If `hide_dealer` is True, don't factor in the dealer's buried card.
+        num_dashes = len(self.dealer.name) + 6
+        print(f"{'-'*num_dashes}\n   {self.dealer.name.upper()}   \n{'-'*num_dashes}\n")
+        if self.dealer.hand:
+            print(self.dealer.hand.pretty_format(hide=self.hide_dealer))
+        else:
+            print('No hand.')
+
+        # Print the gambler's hand(s)
+        num_dashes = len(self.gambler.name) + 6
+        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: {money_format(self.gambler.bankroll)}  |  Auto-Wager: {money_format(self.gambler.auto_wager)}\n")
+        if self.gambler.hands:
+            for hand in self.gambler.hands:
+                print(hand.pretty_format())
+                print()
+        else:
+            print('No hands.')
+
+    def render_activity(self):
+        """Print out the activity log for the current turn."""
+        print(header('ACTIVITY'))
+        for message in self.activity:
+            print(message)
+
+    def render_action(self):
+        """Print out the action section that the user interacts with."""
+        print(header('ACTION'))
+        if self.dealer_playing:
+            print('Dealer playing turn...')
+
+    def render_game_over(self):
+        """Print out a final summary message before exiting the game."""
+        # Show game over message
+        print(header('GAME OVER'))
+
+        # Print a final message after the gambler is finished
+        if self.gambler.auto_wager == 0 or self.turns == self.max_turns:    
+            action = f"{self.gambler.name} cashed out with bankroll: {money_format(self.gambler.bankroll)}."
+            message = 'Thanks for playing!'
+        else:
+            action = f"{self.gambler.name} is out of money."
+            message = 'Better luck next time!'
+
+        # Calculate the gambler's winnings in total and as a percent change
+        gross_winnings = self.gambler.gross_winnings()
+        pct_winnings = self.gambler.pct_winnings()
+        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})\n\n{message}")
+
+        # TODO: Is this where we want this?
+        self.render_analytics()
+
+    def render_analytics(self):
+        """Run some basic analytics on the tracked events and print them for the user."""
+        # Show analytics header
+        print(header('ANALYTICS'))
+
+        # Event percentages
+        hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
+        win_pct = self.wins / hands * 100.0
+        loss_pct = self.losses / hands * 100.0
+        push_pct = self.pushes / hands * 100.0
+        insurance_win_pct = self.insurance_wins / hands * 100.0
+
+        # Render
+        print(f"Hands: {hands}")
+        print(f"Wins: {self.wins} ({pct_format(win_pct)})")
+        print(f"Losses: {self.losses} ({pct_format(loss_pct)})")
+        print(f"Pushes: {self.pushes} ({pct_format(push_pct)})")
+        print(f"Insurance Wins: {self.insurance_wins} ({pct_format(insurance_win_pct)})")
+        print()
+        print(f"Player Blackjacks: {self.gambler_blackjacks}")
+        print(f"Dealer Blackjacks: {self.dealer_blackjacks}")
+        print()
+        print(f"Max Bankroll: {money_format(max(self.bankroll_progression))}")
+        print(f"Min Bankroll: {money_format(min(self.bankroll_progression))}")
+        print()
+
+        # Plot bankroll over time
+        plt.plot(self.bankroll_progression)
+        plt.xlabel('Turn Number')
+        plt.ylabel('Bankroll ($)')
+        plt.show()

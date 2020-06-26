@@ -43,7 +43,6 @@ class Shoe:
     def deal_card(self):
         dealt_card = self.card_pile.pop()
         if not self.card_pile:
-            print('Shoe exhausted. Reshuffling cards...')
             self.reset_card_pile()
         return dealt_card
 

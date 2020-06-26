@@ -5,7 +5,7 @@ from blackjack.models.dealer import Dealer
 from blackjack.models.deck import Deck
 from blackjack.models.gambler import Gambler
 from blackjack.models.shoe import Shoe
-from blackjack.strategies.static_strategy import StaticStrategy
+from blackjack.strategies.default_static_strategy import DefaultStaticStrategy
 from blackjack.strategies.user_input_strategy import UserInputStrategy
 from blackjack.user_input import get_user_input, float_response, int_response
 from blackjack.utils import clear, header
@@ -95,6 +95,7 @@ def setup_game(mode, verbose, default_setup):
     bankroll = setup_data['gambler']['bankroll']
     auto_wager = setup_data['gambler']['auto_wager']
     number_of_decks = setup_data['shoe']['number_of_decks']
+    max_turns = setup_data.get('max_turns')
 
     # Create core components of the game: A Gambler, a Dealer, and a Shoe of cards.
     gambler = Gambler(name, bankroll=bankroll, auto_wager=auto_wager)
@@ -105,12 +106,12 @@ def setup_game(mode, verbose, default_setup):
     if mode == 'interactive':
         strategy = UserInputStrategy()
     elif mode == 'simulated':
-        strategy = StaticStrategy()
+        strategy = DefaultStaticStrategy()
     else:
         raise ValueError(f"Unsupported game mode: {mode}")
 
     # Create the central controller of the game.
-    return GameController(gambler, dealer, shoe, strategy, verbose)
+    return GameController(gambler, dealer, shoe, strategy, verbose, max_turns)
 
 
 if __name__ == '__main__':

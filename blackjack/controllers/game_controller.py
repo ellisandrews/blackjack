@@ -3,7 +3,7 @@ from time import sleep
 
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.utils import clear, header
+from blackjack.utils import clear, header, money_format, pct_format
 
 
 def render_after(instance_method):
@@ -17,30 +17,43 @@ def render_after(instance_method):
 
 class GameController:
 
-    def __init__(self, gambler, dealer, shoe, strategy, verbose):
+    def __init__(self, gambler, dealer, shoe, strategy, verbose, max_turns=None):
         # Configured models from game setup
         self.gambler = gambler
         self.dealer = dealer
         self.shoe = shoe
 
-        # Strategy instance for in-game decision making
+        # Strategy to employ for in-game decision making
         self.strategy = strategy
 
-        # Turn-by-turn activity log
+        # Turn activity log
         self.activity = []
 
         # Render options
-        self.verbose = verbose       # True to print output, False to suppress
+        self.verbose = verbose       # Switch for printing/suppressing output
         self.hide_dealer = True      # Switch for showing/hiding the dealer's buried card during rendering
         self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
+
+        # Max number of turns to play (optional)
+        self.max_turns = max_turns
+
+        # Event tracking (for analytics)
+        self.turns = 0
+        self.wins = 0
+        self.losses = 0
+        self.pushes = 0
+        self.insurance_wins = 0
+        self.gambler_blackjacks = 0
+        self.dealer_blackjacks = 0
+        self.bankroll_progression = [self.gambler.bankroll]
 
     def play(self):
         """Main game loop that controls entire game flow."""
         
-        while not self.gambler.is_finished():
+        while self.play_condition():
 
             # Initialize the activity log for the turn
-            self.add_activity('New Turn.')
+            self.add_activity(f"Turn #{self.turns + 1}")
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
             self.check_gambler_wager()
@@ -62,11 +75,24 @@ class GameController:
             # Settle gambler hand wins and losses.
             self.settle_up()
 
-            # Discard hands and pause execution until the user elects to proceed with the next turn.
+            # Track events and reset in order to proceed with the next turn.
             self.finalize_turn()
 
         # Render a game over message
         self.game_over()
+
+    def play_condition(self):
+        """Return True to play another turn, False otherwise."""
+        # If the gambler is cashed out or out of money there is no turn to play.
+        if self.gambler.is_finished():
+            return False
+        
+        # If max number of turns imposed make sure we haven't hit it yet.
+        if self.max_turns:
+            return self.turns < self.max_turns
+        
+        # Checks have passed, play the turn.
+        return True
 
     @render_after
     def add_activity(self, *messages):
@@ -92,7 +118,7 @@ class GameController:
 
     def set_new_auto_wager(self):
         """Set a new auto-wager amount."""
-        # Set the gambler's auto_wager to $0.
+        # Set the gambler's auto_wager to $0.00.
         self.gambler.zero_auto_wager()
 
         # Ask the gambler for a new auto wager and set it, with some validation.
@@ -426,19 +452,19 @@ class GameController:
         # Determine the payout amount by the payout_type (and odds if applicable)
         if payout_type == 'winning_wager':
             amount = hand.wager * antecedent / consequent
-            message = f"Adding winning hand payout of ${amount} to bankroll."
+            message = f"Adding winning hand payout of {money_format(amount)} to bankroll."
         
         elif payout_type == 'wager_reclaim':
             amount = hand.wager
-            message = f"Reclaiming hand wager of ${amount}."
+            message = f"Reclaiming hand wager of {money_format(amount)}."
         
         elif payout_type == 'winning_insurance':
             amount = hand.insurance * antecedent / consequent
-            message = f"Adding winning insurance payout of ${amount} to bankroll."
+            message = f"Adding winning insurance payout of {money_format(amount)} to bankroll."
         
         elif payout_type == 'insurance_reclaim':
             amount = hand.insurance
-            message = f"Reclaiming insurance wager of ${amount}."
+            message = f"Reclaiming insurance wager of {money_format(amount)}."
 
         else:
             raise ValueError(f"Invalid payout type: '{payout_type}'")
@@ -492,7 +518,7 @@ class GameController:
             self.pay_out_hand(hand, 'insurance')
 
         elif hand.outcome == 'Loss':
-            self.add_activity(f"Hand {hand.hand_number}: Forfeiting hand wager of ${hand.wager}.")
+            self.add_activity(f"Hand {hand.hand_number}: Forfeiting hand wager of {money_format(hand.wager)}.")
 
         else:
             raise ValueError(f"Unhandled hand outcome: {hand.outcome}")
@@ -523,7 +549,7 @@ class GameController:
 
         # Print the gambler's hand(s)
         num_dashes = len(self.gambler.name) + 6
-        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: ${self.gambler.bankroll}  |  Auto-Wager: ${self.gambler.auto_wager}\n")
+        print(f"\n{'-'*num_dashes}\n   {self.gambler.name.upper()}   \n{'-'*num_dashes}\n\nBankroll: {money_format(self.gambler.bankroll)}  |  Auto-Wager: {money_format(self.gambler.auto_wager)}\n")
         if self.gambler.hands:
             for hand in self.gambler.hands:
                 print(hand.pretty_format())
@@ -549,8 +575,8 @@ class GameController:
         print(header('GAME OVER'))
 
         # Print a final message after the gambler is finished
-        if self.gambler.auto_wager == 0:    
-            action = f"{self.gambler.name} cashed out with bankroll: ${self.gambler.bankroll}."
+        if self.gambler.auto_wager == 0 or self.turns == self.max_turns:    
+            action = f"{self.gambler.name} cashed out with bankroll: {money_format(self.gambler.bankroll)}."
             message = 'Thanks for playing!'
         else:
             action = f"{self.gambler.name} is out of money."
@@ -559,7 +585,64 @@ class GameController:
         # Calculate the gambler's winnings in total and as a percent change
         gross_winnings = self.gambler.gross_winnings()
         pct_winnings = self.gambler.pct_winnings()
-        print(f"{action}\nWinnings: ${gross_winnings} ({pct_winnings}%)\n\n{message}\n")
+        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})\n\n{message}")
+
+        # TODO: Is this where we want this?
+        self.render_analytics()
+
+    def render_analytics(self):
+        """Run some basic analytics on the tracked events and print them for the user."""
+        # Show analytics header
+        print(header('ANALYTICS'))
+
+        hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
+        win_pct = self.wins / hands * 100.0
+        loss_pct = self.losses / hands * 100.0
+        push_pct = self.pushes / hands * 100.0
+        insurance_win_pct = self.insurance_wins / hands * 100.0
+
+        print(f"Hands: {hands}")
+        print(f"Wins: {self.wins} ({pct_format(win_pct)})")
+        print(f"Losses: {self.losses} ({pct_format(loss_pct)})")
+        print(f"Pushes: {self.pushes} ({pct_format(push_pct)})")
+        print(f"Insurance Wins: {self.insurance_wins} ({pct_format(insurance_win_pct)})")
+        print()
+        print(f"Player Blackjacks: {self.gambler_blackjacks}")
+        print(f"Dealer Blackjacks: {self.dealer_blackjacks}")
+        print()
+        print(f"Max Bankroll: {money_format(max(self.bankroll_progression))}")
+        print(f"Min Bankroll: {money_format(min(self.bankroll_progression))}")
+        print()
+
+    def track_events(self):
+        """Update the tracked events with the current turn's data."""
+        # Track number of turns played
+        self.turns += 1
+        
+        # Track gambler hand events
+        for hand in self.gambler.hands:
+            # Blackjacks
+            if hand.status == 'Blackjack':
+                self.gambler_blackjacks += 1
+
+            # Outcomes
+            if hand.outcome in ('Win', 'Even Money'):
+                self.wins += 1
+            elif hand.outcome == 'Loss':
+                self.losses += 1
+            elif hand.outcome == 'Push':
+                self.pushes += 1
+            elif hand.outcome == 'Insurance Win':
+                self.insurance_wins += 1
+            else:
+                raise ValueError(f"Unhandled hand outcome: {hand.outcome}")
+
+        # Track dealer blackjacks
+        if self.dealer.hand.status == 'Blackjack':
+            self.dealer_blackjacks += 1
+
+        # Track gambler's bankroll through time
+        self.bankroll_progression.append(self.gambler.bankroll)
 
     def finalize_turn(self):
         """Clean up the current turn in preparation for the next turn."""
@@ -567,20 +650,19 @@ class GameController:
         if self.verbose:
             self.render()
         
+        # Update tracked events
+        self.track_events()
+
         # Reset the activity log for the next turn.
         self.activity = []
 
         # Discard both the gambler and the dealer's hands.
-        self.discard_hands()
-
+        self.gambler.discard_hands()
+        self.dealer.discard_hand()
+        
         # Reset hide_dealer for the next turn.
         self.hide_dealer = True
 
         # Pause exectution until the user wants to proceed if applicable.
         if self.verbose:
             input('Push ENTER to proceed => ')
-
-    def discard_hands(self):
-        """Get rid of gambler and dealer hands."""
-        self.gambler.discard_hands()
-        self.dealer.discard_hand()

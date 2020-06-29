@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from time import sleep
 
-from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.analytics.analyzer import Analyzer
+from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.utils import clear, header, money_format, pct_format

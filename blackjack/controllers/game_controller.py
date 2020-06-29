@@ -37,7 +37,7 @@ class GameController:
         self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
 
         # Keep track of number of turns played (and the max number of turns to play if applicable)
-        self.turns = 0
+        self.turn = 0
         self.max_turns = max_turns
 
         # Metric tracking (for analytics)
@@ -51,8 +51,11 @@ class GameController:
         # Play the game to completion
         while self.play_condition():
 
+            # Increment the turn counter
+            self.turn += 1
+
             # Initialize the activity log for the turn
-            self.add_activity(f"Turn #{self.turns + 1}")
+            self.add_activity(f"Turn #{self.turn}")
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
             self.check_gambler_wager()
@@ -88,7 +91,7 @@ class GameController:
         
         # If max number of turns imposed make sure we haven't hit it yet.
         if self.max_turns:
-            return self.turns < self.max_turns
+            return self.turn < self.max_turns
         
         # Checks have passed, play the turn.
         return True
@@ -529,9 +532,6 @@ class GameController:
 
     def track_metrics(self):
         """Update the tracked metrics with the current turn's data."""
-        # Updated number of turns played
-        self.turns += 1
-        
         # Track gambler hand metrics
         for hand in self.gambler.hands:
             self.metric_tracker.process_gambler_hand(hand)
@@ -612,7 +612,7 @@ class GameController:
         print(header('GAME OVER'))
 
         # Print a final message after the gambler is finished
-        if self.gambler.auto_wager == 0 or self.turns == self.max_turns:    
+        if self.gambler.auto_wager == 0 or self.turn == self.max_turns:
             action = f"{self.gambler.name} cashed out with bankroll: {money_format(self.gambler.bankroll)}."
             message = 'Thanks for playing!'
         else:

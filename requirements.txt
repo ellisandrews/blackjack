@@ -1,5 +1,10 @@
+-e git+https://github.com/ellisandrews/blackjack.git@7bfa5e89c2160c9ad30c50555bd2676f33df39c4#egg=Blackjack
+cycler==0.10.0
+kiwisolver==1.2.0
+matplotlib==3.2.2
 numpy==1.19.0
 pandas==1.0.5
+pyparsing==2.4.7
 python-dateutil==2.8.1
 pytz==2020.1
 six==1.15.0

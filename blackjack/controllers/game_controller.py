@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from time import sleep
 
+from blackjack.analytics.metric_tracker import MetricTracker
+from blackjack.analytics.analyzer import Analyzer
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
 from blackjack.utils import clear, header, money_format, pct_format
@@ -34,22 +36,19 @@ class GameController:
         self.hide_dealer = True      # Switch for showing/hiding the dealer's buried card during rendering
         self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
 
-        # Max number of turns to play (optional)
+        # Keep track of number of turns played (and the max number of turns to play if applicable)
+        self.turns = 0
         self.max_turns = max_turns
 
-        # Event tracking (for analytics)
-        self.turns = 0
-        self.wins = 0
-        self.losses = 0
-        self.pushes = 0
-        self.insurance_wins = 0
-        self.gambler_blackjacks = 0
-        self.dealer_blackjacks = 0
-        self.bankroll_progression = [self.gambler.bankroll]
+        # Metric tracking (for analytics)
+        self.metric_tracker = MetricTracker()
 
     def play(self):
         """Main game loop that controls entire game flow."""
-        
+        # Track the starting bankroll
+        self.metric_tracker.append_bankroll(self.gambler.bankroll)
+
+        # Play the game to completion
         while self.play_condition():
 
             # Initialize the activity log for the turn
@@ -75,11 +74,11 @@ class GameController:
             # Settle gambler hand wins and losses.
             self.settle_up()
 
-            # Track events and reset in order to proceed with the next turn.
+            # Track metrics and reset in order to proceed with the next turn.
             self.finalize_turn()
 
-        # Render a game over message
-        self.game_over()
+        # Render a game over message with analytics
+        self.render_game_over()
 
     def play_condition(self):
         """Return True to play another turn, False otherwise."""
@@ -528,6 +527,44 @@ class GameController:
         for hand in self.gambler.hands:
             self.settle_hand(hand)
 
+    def track_metrics(self):
+        """Update the tracked metrics with the current turn's data."""
+        # Updated number of turns played
+        self.turns += 1
+        
+        # Track gambler hand metrics
+        for hand in self.gambler.hands:
+            self.metric_tracker.process_gambler_hand(hand)
+        
+        # Track dealer hand metrics
+        self.metric_tracker.process_dealer_hand(self.dealer.hand)
+
+        # Track gambler's bankroll through time
+        self.metric_tracker.append_bankroll(self.gambler.bankroll)
+
+    def finalize_turn(self):
+        """Clean up the current turn in preparation for the next turn."""
+        # Render the final status of the turn if applicable.
+        if self.verbose:
+            self.render()
+        
+        # Update tracked metrics
+        self.track_metrics()
+
+        # Reset the activity log for the next turn.
+        self.activity = []
+
+        # Discard both the gambler and the dealer's hands.
+        self.gambler.discard_hands()
+        self.dealer.discard_hand()
+        
+        # Reset hide_dealer for the next turn.
+        self.hide_dealer = True
+
+        # Pause exectution until the user wants to proceed if applicable.
+        if self.verbose:
+            input('Push ENTER to proceed => ')
+
     def render(self):
         """Print out the entire game (comprised of table, activity log, and user action) to the console."""
         clear()  # Clear previous rendering
@@ -569,7 +606,7 @@ class GameController:
         if self.dealer_playing:
             print('Dealer playing turn...')
 
-    def game_over(self):
+    def render_game_over(self):
         """Print out a final summary message before exiting the game."""
         # Show game over message
         print(header('GAME OVER'))
@@ -591,78 +628,23 @@ class GameController:
         self.render_analytics()
 
     def render_analytics(self):
-        """Run some basic analytics on the tracked events and print them for the user."""
+        """Print out some basic analytics on tracked metrics, including graphs."""
         # Show analytics header
         print(header('ANALYTICS'))
 
-        hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
-        win_pct = self.wins / hands * 100.0
-        loss_pct = self.losses / hands * 100.0
-        push_pct = self.pushes / hands * 100.0
-        insurance_win_pct = self.insurance_wins / hands * 100.0
+        # Instantiate an Analyzer from tracked metrics
+        analyzer = Analyzer(
+            wins=self.metric_tracker.wins,
+            losses=self.metric_tracker.losses,
+            pushes=self.metric_tracker.pushes,
+            insurance_wins=self.metric_tracker.insurance_wins,
+            gambler_blackjacks=self.metric_tracker.gambler_blackjacks,
+            dealer_blackjacks=self.metric_tracker.dealer_blackjacks,
+            bankroll_progression=self.metric_tracker.bankroll_progression
+        )
 
-        print(f"Hands: {hands}")
-        print(f"Wins: {self.wins} ({pct_format(win_pct)})")
-        print(f"Losses: {self.losses} ({pct_format(loss_pct)})")
-        print(f"Pushes: {self.pushes} ({pct_format(push_pct)})")
-        print(f"Insurance Wins: {self.insurance_wins} ({pct_format(insurance_win_pct)})")
-        print()
-        print(f"Player Blackjacks: {self.gambler_blackjacks}")
-        print(f"Dealer Blackjacks: {self.dealer_blackjacks}")
-        print()
-        print(f"Max Bankroll: {money_format(max(self.bankroll_progression))}")
-        print(f"Min Bankroll: {money_format(min(self.bankroll_progression))}")
-        print()
+        # Run basic analytics and render them
+        print(analyzer.format_summary())
 
-    def track_events(self):
-        """Update the tracked events with the current turn's data."""
-        # Track number of turns played
-        self.turns += 1
-        
-        # Track gambler hand events
-        for hand in self.gambler.hands:
-            # Blackjacks
-            if hand.status == 'Blackjack':
-                self.gambler_blackjacks += 1
-
-            # Outcomes
-            if hand.outcome in ('Win', 'Even Money'):
-                self.wins += 1
-            elif hand.outcome == 'Loss':
-                self.losses += 1
-            elif hand.outcome == 'Push':
-                self.pushes += 1
-            elif hand.outcome == 'Insurance Win':
-                self.insurance_wins += 1
-            else:
-                raise ValueError(f"Unhandled hand outcome: {hand.outcome}")
-
-        # Track dealer blackjacks
-        if self.dealer.hand.status == 'Blackjack':
-            self.dealer_blackjacks += 1
-
-        # Track gambler's bankroll through time
-        self.bankroll_progression.append(self.gambler.bankroll)
-
-    def finalize_turn(self):
-        """Clean up the current turn in preparation for the next turn."""
-        # Render the final status of the turn if applicable.
-        if self.verbose:
-            self.render()
-        
-        # Update tracked events
-        self.track_events()
-
-        # Reset the activity log for the next turn.
-        self.activity = []
-
-        # Discard both the gambler and the dealer's hands.
-        self.gambler.discard_hands()
-        self.dealer.discard_hand()
-        
-        # Reset hide_dealer for the next turn.
-        self.hide_dealer = True
-
-        # Pause exectution until the user wants to proceed if applicable.
-        if self.verbose:
-            input('Push ENTER to proceed => ')
+        # Create summary graphs and show them
+        analyzer.create_plots()

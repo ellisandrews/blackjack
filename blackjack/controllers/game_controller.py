@@ -643,6 +643,8 @@ class GameController:
             bankroll_progression=self.metric_tracker.bankroll_progression
         )
 
+        # Run basic analytics and render them
         print(analyzer.format_summary())
 
+        # Create summary graphs and show them
         analyzer.create_plots()

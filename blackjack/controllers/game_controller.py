@@ -628,7 +628,7 @@ class GameController:
         self.render_analytics()
 
     def render_analytics(self):
-
+        """Print out some basic analytics on tracked metrics, including graphs."""
         # Show analytics header
         print(header('ANALYTICS'))
 

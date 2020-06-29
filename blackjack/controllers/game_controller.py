@@ -1,8 +1,6 @@
 from collections import OrderedDict
 from time import sleep
 
-import matplotlib.pyplot as plt
-
 from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.analytics.analyzer import Analyzer
 from blackjack.exc import InsufficientBankrollError
@@ -647,22 +645,4 @@ class GameController:
 
         print(analyzer.format_summary())
 
-        # # Create a figure to hold the plots (called "axes")
-        # fig, (ax1, ax2) = plt.subplots(2, 1)  # 2 rows 1 column of axes (i.e. stacked plots)
-
-        # # Axes 1: Bankroll vs. Turn Number
-        # ax1.plot(self.bankroll_progression)
-        # ax1.set_xlabel('Turn Number')
-        # ax1.set_ylable('Bankroll ($)')
-        # ax1.set_title('Bankroll vs. Turn Number')
-
-        # # Axes 2: Hand Outcome Breakdown
-
-        # data = [self.wins, self.losses, self.pushes, self.insurance_wins]
-        # labels = ['Wins', 'Losses', 'Pushes', 'Insurance Wins']
-        # wedges, texts, autotexts = ax2.pie(data, labels=labels)
-        # ax2.set_title('Hand Outcome Breakdown')
-        
-        # # Avoid plot label overlap
-        # plt.tight_layout()
-        # plt.show()
+        analyzer.create_plots()

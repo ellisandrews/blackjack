@@ -2,10 +2,9 @@ from collections import OrderedDict
 from time import sleep
 
 from blackjack.analytics.metric_tracker import MetricTracker
-from blackjack.analytics.analyzer import Analyzer
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.utils import clear, header, money_format, pct_format
+from blackjack.display_utils import clear, header, money_format, pct_format
 
 
 def render_after(instance_method):
@@ -19,7 +18,7 @@ def render_after(instance_method):
 
 class GameController:
 
-    def __init__(self, gambler, dealer, shoe, strategy, verbose, max_turns=None):
+    def __init__(self, gambler, dealer, shoe, strategy, verbose=True, max_turns=None):
         # Configured models from game setup
         self.gambler = gambler
         self.dealer = dealer
@@ -37,7 +36,7 @@ class GameController:
         self.dealer_playing = False  # Switch for when dealer is playing and no user actions available
 
         # Keep track of number of turns played (and the max number of turns to play if applicable)
-        self.turns = 0
+        self.turn = 0
         self.max_turns = max_turns
 
         # Metric tracking (for analytics)
@@ -51,8 +50,11 @@ class GameController:
         # Play the game to completion
         while self.play_condition():
 
+            # Increment the turn counter
+            self.turn += 1
+
             # Initialize the activity log for the turn
-            self.add_activity(f"Turn #{self.turns + 1}")
+            self.add_activity(f"Turn #{self.turn}")
 
             # Vet the gambler's auto-wager against their bankroll, and ask if they would like to change their wager or cash out.
             self.check_gambler_wager()
@@ -77,8 +79,8 @@ class GameController:
             # Track metrics and reset in order to proceed with the next turn.
             self.finalize_turn()
 
-        # Render a game over message with analytics
-        self.render_game_over()
+        # Render a game over message
+        self.finalize_game()
 
     def play_condition(self):
         """Return True to play another turn, False otherwise."""
@@ -88,7 +90,7 @@ class GameController:
         
         # If max number of turns imposed make sure we haven't hit it yet.
         if self.max_turns:
-            return self.turns < self.max_turns
+            return self.turn < self.max_turns
         
         # Checks have passed, play the turn.
         return True
@@ -529,9 +531,6 @@ class GameController:
 
     def track_metrics(self):
         """Update the tracked metrics with the current turn's data."""
-        # Updated number of turns played
-        self.turns += 1
-        
         # Track gambler hand metrics
         for hand in self.gambler.hands:
             self.metric_tracker.process_gambler_hand(hand)
@@ -565,6 +564,12 @@ class GameController:
         if self.verbose:
             input('Push ENTER to proceed => ')
 
+    def finalize_game(self):
+        """Wrap up the game, rendering analytics and creating graphs if necessary."""
+        # Render game over message if applicable
+        if self.verbose:
+            self.render_game_over()
+        
     def render(self):
         """Print out the entire game (comprised of table, activity log, and user action) to the console."""
         clear()  # Clear previous rendering
@@ -607,44 +612,16 @@ class GameController:
             print('Dealer playing turn...')
 
     def render_game_over(self):
-        """Print out a final summary message before exiting the game."""
+        """Print out a final summary message once the game has ended."""
         # Show game over message
         print(header('GAME OVER'))
 
         # Print a final message after the gambler is finished
-        if self.gambler.auto_wager == 0 or self.turns == self.max_turns:    
+        if self.gambler.auto_wager == 0 or self.turn == self.max_turns:
             action = f"{self.gambler.name} cashed out with bankroll: {money_format(self.gambler.bankroll)}."
             message = 'Thanks for playing!'
         else:
             action = f"{self.gambler.name} is out of money."
             message = 'Better luck next time!'
 
-        # Calculate the gambler's winnings in total and as a percent change
-        gross_winnings = self.gambler.gross_winnings()
-        pct_winnings = self.gambler.pct_winnings()
-        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})\n\n{message}")
-
-        # TODO: Is this where we want this?
-        self.render_analytics()
-
-    def render_analytics(self):
-        """Print out some basic analytics on tracked metrics, including graphs."""
-        # Show analytics header
-        print(header('ANALYTICS'))
-
-        # Instantiate an Analyzer from tracked metrics
-        analyzer = Analyzer(
-            wins=self.metric_tracker.wins,
-            losses=self.metric_tracker.losses,
-            pushes=self.metric_tracker.pushes,
-            insurance_wins=self.metric_tracker.insurance_wins,
-            gambler_blackjacks=self.metric_tracker.gambler_blackjacks,
-            dealer_blackjacks=self.metric_tracker.dealer_blackjacks,
-            bankroll_progression=self.metric_tracker.bankroll_progression
-        )
-
-        # Run basic analytics and render them
-        print(analyzer.format_summary())
-
-        # Create summary graphs and show them
-        analyzer.create_plots()
+        print(f"{action}\n\n{message}")

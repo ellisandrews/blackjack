@@ -58,3 +58,15 @@ class MetricTracker:
     def append_bankroll(self, bankroll):
         """Append a bankroll amount to the list of bankrolls tracked."""
         self.bankroll_progression.append(bankroll)
+
+    def serialize_metrics(self):
+        """Get a dictionary representation of tracked metrics."""
+        return {
+            'wins': self.wins,
+            'losses': self.losses,
+            'pushes': self.pushes,
+            'insurance_wins': self.insurance_wins,
+            'gambler_blackjacks': self.gambler_blackjacks,
+            'dealer_blackjacks': self.dealer_blackjacks,
+            'bankroll_progression': self.bankroll_progression
+        }

@@ -1,8 +1,9 @@
+from statistics import mean
 from textwrap import dedent
 
 import matplotlib.pyplot as plt
 
-from blackjack.utils import money_format, pct_format
+from blackjack.display_utils import money_format, pct_format
 
 
 def slice_label(percent, all_vals):
@@ -14,8 +15,8 @@ def slice_label(percent, all_vals):
     return "{:.1f}%\n({:d})".format(percent, absolute)
 
 
-class Analyzer:
-    """Class for running basic analytics on tracked game metrics."""
+class SingleGameAnalyzer:
+    """Class for running basic analytics on tracked metrics for a single game."""
 
     def __init__(self,
                  wins=0,
@@ -39,13 +40,17 @@ class Analyzer:
         # Total number of hands
         hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
 
+        # Winnings
+        gross_winnings = self.bankroll_progression[-1] - self.bankroll_progression[0]
+        pct_winnings = gross_winnings / self.bankroll_progression[0] * 100.0
+
         # Metric percentages
         win_pct = self.wins / hands * 100.0
         loss_pct = self.losses / hands * 100.0
         push_pct = self.pushes / hands * 100.0
         insurance_win_pct = self.insurance_wins / hands * 100.0
 
-        # Returnt the formatted summary string
+        # Return the formatted summary string
         return dedent(f"""\
             Hands: {hands}
             
@@ -59,6 +64,9 @@ class Analyzer:
 
             Max Bankroll: {money_format(max(self.bankroll_progression))}
             Min Bankroll: {money_format(min(self.bankroll_progression))}
+            Avg Bankroll: {money_format(mean(self.bankroll_progression))}
+
+            Winnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})
             """
         )
 

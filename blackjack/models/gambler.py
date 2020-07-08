@@ -1,5 +1,5 @@
 from blackjack.exc import InsufficientBankrollError, OverdraftError
-from blackjack.utils import money_format
+from blackjack.display_utils import money_format
 
 
 class Gambler:
@@ -9,9 +9,6 @@ class Gambler:
         self.bankroll = bankroll
         self.auto_wager = auto_wager
         self.hands = hands or []
-
-        # Store the initial bankroll to track net progress
-        self.initial_bankroll = bankroll
 
     def __str__(self):
         return f"Player: {self.name} | Bankroll: {money_format(self.bankroll)}"
@@ -93,11 +90,3 @@ class Gambler:
     def settle_up(self, dealer_hand):
         for hand in self.hands:
             hand.settle_up(dealer_hand)
-
-    def gross_winnings(self):
-        """Get total money won (or lost) over gambler's lifetime."""
-        return self.bankroll - self.initial_bankroll
-
-    def pct_winnings(self):
-        """Get the change in bankroll as a percent over the gambler's lifetime."""
-        return self.gross_winnings() / self.initial_bankroll * 100

@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser
 
+from blackjack.analytics.multi_game_analyzer import MultiGameAnalyzer
 from blackjack.configuration import get_simulation_configuration
 from blackjack.display_utils import clear
 from blackjack.game_setup import setup_game
@@ -34,7 +35,17 @@ if __name__ == '__main__':
     # Load the game configuration (in this case, the 'simulation' configuration).
     configuration = get_simulation_configuration(args.bankroll, args.auto_wager, args.decks, strategy, args.turns)
 
+    # Collection of MetricTrackers from each simulated game
+    results = []
+
     # TODO: Multiprocess the games?
-    for _ in range(args.games):
+    for i in range(args.games):
+        print(i)
         game = setup_game(configuration)
         game.play()
+        results.append(game.metric_tracker)
+    
+    # Analyze the results of the games
+    analyzer = MultiGameAnalyzer(results)
+    print(analyzer.format_summary())
+    analyzer.create_plots()

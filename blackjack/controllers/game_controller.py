@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from time import sleep
 
-from blackjack.analytics.analyzer import Analyzer
 from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
@@ -80,7 +79,7 @@ class GameController:
             # Track metrics and reset in order to proceed with the next turn.
             self.finalize_turn()
 
-        # Render a game over message with analytics
+        # Render a game over message
         self.finalize_game()
 
     def play_condition(self):
@@ -570,7 +569,6 @@ class GameController:
         # Render game over message if applicable
         if self.verbose:
             self.render_game_over()
-            self.render_analytics()
         
     def render(self):
         """Print out the entire game (comprised of table, activity log, and user action) to the console."""
@@ -626,21 +624,4 @@ class GameController:
             action = f"{self.gambler.name} is out of money."
             message = 'Better luck next time!'
 
-        # Calculate the gambler's winnings in total and as a percent change
-        gross_winnings = self.gambler.gross_winnings()
-        pct_winnings = self.gambler.pct_winnings()
-        print(f"{action}\nWinnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})\n\n{message}")
-
-    def render_analytics(self):
-        """Print out some basic analytics on tracked metrics, including graphs."""
-        # Show analytics header
-        print(header('ANALYTICS'))
-
-        # Instantiate an Analyzer from tracked metrics
-        analyzer = Analyzer(**self.metric_tracker.serialize_metrics())
-
-        # Run basic analytics and render them
-        print(analyzer.format_summary())
-
-        # Create summary graphs and show them
-        analyzer.create_plots()
+        print(f"{action}\n\n{message}")

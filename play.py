@@ -2,8 +2,9 @@
 
 from argparse import ArgumentParser
 
+from blackjack.analytics.single_game_analyzer import SingleGameAnalyzer
 from blackjack.configuration import get_interactive_configuration
-from blackjack.display_utils import clear
+from blackjack.display_utils import clear, header
 from blackjack.game_setup import setup_game
 
 
@@ -25,3 +26,15 @@ if __name__ == '__main__':
 
     # Play the game.
     game.play()
+
+    # Show analytics header.
+    print(header('ANALYTICS'))
+
+    # Instantiate an SingleGameAnalyzer from tracked game metrics
+    analyzer = SingleGameAnalyzer(**game.metric_tracker.serialize_metrics())
+
+    # Run basic analytics and print them
+    print(analyzer.format_summary())
+
+    # Create summary graphs and display them
+    analyzer.create_plots()

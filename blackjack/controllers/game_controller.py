@@ -5,7 +5,7 @@ from blackjack.analytics.analyzer import Analyzer
 from blackjack.analytics.metric_tracker import MetricTracker
 from blackjack.exc import InsufficientBankrollError
 from blackjack.models.hand import DealerHand, GamblerHand
-from blackjack.utils import clear, header, money_format, pct_format
+from blackjack.display_utils import clear, header, money_format, pct_format
 
 
 def render_after(instance_method):

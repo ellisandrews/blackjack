@@ -1,4 +1,4 @@
-from blackjack.utils import money_format
+from blackjack.display_utils import money_format
 
 
 class Hand:

@@ -2,7 +2,7 @@ from textwrap import dedent
 
 import matplotlib.pyplot as plt
 
-from blackjack.utils import money_format, pct_format
+from blackjack.display_utils import money_format, pct_format
 
 
 def slice_label(percent, all_vals):

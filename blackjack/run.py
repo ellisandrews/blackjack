@@ -49,7 +49,7 @@ def get_default_setup(mode):
     # Required data
     setup_data = {
         'gambler': {
-            'name': 'Player 1',
+            'name': 'Gambler',
             'bankroll': 100,
             'auto_wager': 10
         },

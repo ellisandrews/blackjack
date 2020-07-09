@@ -47,6 +47,7 @@ class Hand:
         return sum(1 for card in self.cards if card.is_ace())
 
     def format_possible_totals(self):
+        """Get human readable string representing the hand total(s) to display."""
         # Get possible hand total(s) to display
         low_total, high_total = self.possible_totals()
 
@@ -64,6 +65,7 @@ class Hand:
         return high_total or low_total
 
     def get_total_to_display(self):
+        """Get the hand total to display contingent on hand status."""
         # If hand is still active, allow for multiple totals to be displayed. Otherwise, display the single final total.
         if self.status in ('Pending', 'Playing'):
             return self.format_possible_totals()

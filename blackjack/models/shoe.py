@@ -5,46 +5,40 @@ from blackjack.models.deck import Deck
 
 class Shoe:
 
-    all_ = []
-    id_counter = 1
+    def __init__(self, num_decks):
+        # Create the decks of cards.
+        self.decks = [Deck() for _ in range(num_decks)]
 
-    def __init__(self):
-        self.card_pile = []  # This will hold the cards that are eligible to be dealt
+        # List to hold the cards to be dealt, in the order in which they'll be dealt.
+        self.card_pile = []
 
-        # No database, so assign an ID and hold in memory
-        self.id = Shoe.id_counter
-        Shoe.id_counter += 1
-        Shoe.all_.append(self)
-
-    def __str__(self):
-        return f"{self.__class__.__name__} {self.id}"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def decks(self):
-        return [deck for deck in Deck.all_ if deck.shoe == self]
+        # Initialize with a shuffled card pile so the shoe is ready to be played.
+        self.reset_card_pile()
 
     def cards(self):
+        """Get all cards belonging to the shoe (through decks)."""
         cards = []
-        for deck in self.decks():
-            for card in deck.cards():
+        for deck in self.decks:
+            for card in deck.cards:
                 cards.append(card)
         return cards
 
     def shuffled_cards(self):
+        """Shuffle the shoe's cards."""
         cards = self.cards()
         random.shuffle(cards)
         return cards
 
     def reset_card_pile(self):
+        """Reset the shoe's card pile."""
         self.card_pile = self.shuffled_cards()
 
     def deal_card(self):
-        dealt_card = self.card_pile.pop()
+        """Deal a card from the shoe (reshuffle if pile exhausted)."""
         if not self.card_pile:
             self.reset_card_pile()
-        return dealt_card
+        return self.card_pile.pop()
 
     def deal_n_cards(self, num_cards):
+        """Deal a set number of cards from the shoe."""
         return [self.deal_card() for _ in range(num_cards)]

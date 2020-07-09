@@ -14,14 +14,16 @@ class Gambler:
         return f"Player: {self.name} | Bankroll: {money_format(self.bankroll)}"
 
     def discard_hands(self):
+        """Reset hands list."""
         self.hands = []
 
     def is_finished(self):
+        """Check if the gambler is finished playhing."""
         # Player is finished if they've set their wager to $0.00, or they're out of money
         return self.auto_wager == 0 or self.bankroll == 0
 
     def first_hand(self):
-        # Helper method for action that happens on the initial hand dealt to the gambler
+        """Helper method for action that happens on the initial hand dealt to the gambler."""
         return self.hands[0]
 
     def _add_bankroll(self, amount):
@@ -36,6 +38,7 @@ class Gambler:
             raise OverdraftError('Bankroll cannot go negative')
 
     def payout(self, amount):
+        """Public facing method for adding bankroll."""
         self._add_bankroll(amount)
 
     def can_place_wager(self, amount):
@@ -88,5 +91,6 @@ class Gambler:
             raise InsufficientBankrollError('Insufficient bankroll to set auto-wager')
 
     def settle_up(self, dealer_hand):
+        """Compare Gambler hands to a given Dealer hand."""
         for hand in self.hands:
             hand.settle_up(dealer_hand)

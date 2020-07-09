@@ -3,6 +3,8 @@
 import multiprocessing as mp
 from argparse import ArgumentParser
 
+from tqdm import tqdm
+
 from blackjack.analytics.multi_game_analyzer import MultiGameAnalyzer
 from blackjack.configuration import get_simulation_configuration
 from blackjack.display_utils import clear, header
@@ -43,10 +45,11 @@ if __name__ == '__main__':
     # Load the game configuration (in this case, the 'simulation' configuration).
     configuration = get_simulation_configuration(args.bankroll, args.auto_wager, args.decks, strategy, args.turns)
 
-    # Multiprocess game execution and collect MetricTrackers from each simulated game.
-    pool = mp.Pool(args.concurrency)
-    results = pool.map(worker, (setup_game(configuration) for _ in range(args.games)))
-    
+    # Multiprocess game execution and collect MetricTrackers from each simulated game (with a progress bar!)
+    print('Running Game Simulations...\n')
+    with mp.Pool(args.concurrency) as pool:
+        results = list(tqdm(pool.imap(worker, (setup_game(configuration) for _ in range(args.games))), total=args.games))
+
     # Analyze the results of the games
     print(header('ANALYTICS'))
     analyzer = MultiGameAnalyzer(results)

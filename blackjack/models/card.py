@@ -29,9 +29,11 @@ class Card:
         return self.__str__()
 
     def is_ace(self):
+        """Check whether the card is an ace."""
         return self.name == 'Ace'
 
     def is_facecard(self):
+        """Check whether the card is a facecard."""
         return self.value == 10
 
     def csv_format(self):

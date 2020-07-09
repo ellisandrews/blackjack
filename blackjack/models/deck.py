@@ -8,6 +8,7 @@ class Deck:
 
     @staticmethod
     def _build_deck():
+        """Create a full deck of all 52 cards."""
         cards = []
         for suit in Card.SUITS:
             for name, value in Card.RANKS:

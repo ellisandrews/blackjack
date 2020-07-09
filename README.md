@@ -90,12 +90,9 @@ All strategies must inherit from `BaseStrategy`, which is an [abstract base clas
 
 `StaticStrategy` classes all use a common mechanism for making decisions about actions to take on a given hand (e.g. hit, stand, double, split). Specifically, they rely on three CSVs to be fed to them that outline these decisions (examples can be found in the `blackjack/strategies/csv/` directory). A user can edit the data in these CSVs however they like to construct a strategy, but they must follow the template. The three kinds of CSVs are:
 
-1. `hard.csv`
-    - Specifies actions based on the gambler's "hard" hand total (no Aces counted as 11).
-2. `soft.csv`
-    - Specifies actions based on the gambler's "soft" hand total (at least one Ace counted as 11).
-3. `split.csv`
-    - Specifies whether or not to split if the gambler's cards are of equal rank.
+1. `hard.csv` - Specifies actions based on the gambler's "hard" hand total (no Aces counted as 11).
+2. `soft.csv` - Specifies actions based on the gambler's "soft" hand total (at least one Ace counted as 11).
+3. `split.csv` - Specifies whether or not to split if the gambler's cards are of equal rank.
 
 The header row of each CSV is the dealer's up card (meaning the card the dealer is showing). The first column of each CSV represents the gambler's hand. Thus, the action to take (the "decision") is found at the intersection of checking the gambler's hand and the dealer's up card, applying some logic to hierarchically check the three CSVs until a single action is decided upon.
 
@@ -109,4 +106,4 @@ Each instance of a blackjack game is set up to track a handful of metrics over i
 - Maximum, minimum, and average bankroll amount.
 - Gross winnings and percent change in bankroll.
 
-In addition, to the analytics summary, [matplotlib](https://matplotlib.org/) is used to create some basic charts visualizing the collected data.
+In addition to the analytics summary, [matplotlib](https://matplotlib.org/) is used to create some basic charts visualizing the collected data.

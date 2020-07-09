@@ -50,8 +50,8 @@ class MultiGameAnalyzer:
 
         return wins, losses, pushes, insurance_wins, gambler_blackjacks, dealer_blackjacks, final_bankrolls
 
-    def format_summary(self):
-        """Get simple analytics summmary and format it to be rendered for the user."""
+    def print_summary(self):
+        """Print a simple summary of analyzed results."""
         # Total number of hands
         hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
 
@@ -66,7 +66,7 @@ class MultiGameAnalyzer:
         insurance_win_pct = self.insurance_wins / hands * 100.0
 
         # Return the formatted summary string
-        return dedent(f"""\
+        print(dedent(f"""\
             Hands: {hands}
             
             Wins: {self.wins} ({pct_format(win_pct)})
@@ -82,7 +82,7 @@ class MultiGameAnalyzer:
             Avg Bankroll: {money_format(mean(self.final_bankrolls))}
 
             Avg Winnings: {money_format(avg_gross_winnings)} ({pct_format(avg_pct_winnings)})
-            """
+            """)
         )
 
     def create_plots(self):

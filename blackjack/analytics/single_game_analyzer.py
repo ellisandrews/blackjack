@@ -35,8 +35,8 @@ class SingleGameAnalyzer:
         self.dealer_blackjacks = dealer_blackjacks
         self.bankroll_progression = bankroll_progression or []
 
-    def format_summary(self):
-        """Get simple analytics summmary and format it to be rendered for the user."""
+    def print_summary(self):
+        """Print a simple summary of analyzed results."""
         # Total number of hands
         hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
 
@@ -51,7 +51,7 @@ class SingleGameAnalyzer:
         insurance_win_pct = self.insurance_wins / hands * 100.0
 
         # Return the formatted summary string
-        return dedent(f"""\
+        print(dedent(f"""\
             Hands: {hands}
             
             Wins: {self.wins} ({pct_format(win_pct)})
@@ -67,7 +67,7 @@ class SingleGameAnalyzer:
             Avg Bankroll: {money_format(mean(self.bankroll_progression))}
 
             Winnings: {money_format(gross_winnings)} ({pct_format(pct_winnings)})
-            """
+            """)
         )
 
     def create_plots(self):

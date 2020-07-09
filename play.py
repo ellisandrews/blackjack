@@ -27,14 +27,8 @@ if __name__ == '__main__':
     # Play the game.
     game.play()
 
-    # Show analytics header.
+    # Analyze the results of the game.
     print(header('ANALYTICS'))
-
-    # Instantiate an SingleGameAnalyzer from tracked game metrics
     analyzer = SingleGameAnalyzer(**game.metric_tracker.serialize_metrics())
-
-    # Run basic analytics and print them
-    print(analyzer.format_summary())
-
-    # Create summary graphs and display them
+    analyzer.print_summary()
     analyzer.create_plots()

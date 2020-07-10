@@ -21,7 +21,14 @@ Change directory.
 $ cd blackjack/
 ```
 
-Install the requirements (likely in a virtual environment). This project is written for Python 3.7.
+Create a _python3_ virtual environment and activate it.
+
+```
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+```
+
+Install the requirements.
 
 ```
 $ pip install -r requirements.txt

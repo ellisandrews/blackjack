@@ -24,3 +24,11 @@ def money_format(money):
 def pct_format(percent):
     """Format a percent value as a string."""
     return "{0:+.2f}%".format(percent)
+
+
+def zero_division_pct(numerator, denominator):
+    """Get a percentage value through division, handling zero division errors."""
+    try:
+        return numerator / denominator * 100.0
+    except ZeroDivisionError:
+        return 0.0

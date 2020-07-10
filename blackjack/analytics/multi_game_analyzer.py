@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import matplotlib.pyplot as plt
 
-from blackjack.display_utils import money_format, pct_format
+from blackjack.display_utils import money_format, pct_format, zero_division_pct
 
 
 def slice_label(percent, all_vals):
@@ -22,7 +22,7 @@ class MultiGameAnalyzer:
         # All games have the same initial bankroll. Grab it from the first game.
         self.initial_bankroll = metric_trackers[0].bankroll_progression[0]
 
-        (self.wins, self.losses, self.pushes, self.insurance_wins, 
+        (self.wins, self.losses, self.pushes, self.insurance_wins, self.insurance_losses,
          self.gambler_blackjacks, self.dealer_blackjacks, self.final_bankrolls) = self._aggregate_metrics(metric_trackers)
 
     @staticmethod
@@ -32,6 +32,7 @@ class MultiGameAnalyzer:
         losses = 0
         pushes = 0
         insurance_wins = 0
+        insurance_losses = 0
         gambler_blackjacks = 0
         dealer_blackjacks = 0
 
@@ -44,44 +45,68 @@ class MultiGameAnalyzer:
             losses += mt.losses
             pushes += mt.pushes
             insurance_wins += mt.insurance_wins
+            insurance_losses += mt.insurance_losses
             gambler_blackjacks += mt.gambler_blackjacks
             dealer_blackjacks += mt.dealer_blackjacks
             final_bankrolls.append(mt.bankroll_progression[-1])
 
-        return wins, losses, pushes, insurance_wins, gambler_blackjacks, dealer_blackjacks, final_bankrolls
+        return wins, losses, pushes, insurance_wins, insurance_losses, gambler_blackjacks, dealer_blackjacks, final_bankrolls
 
     def print_summary(self):
         """Print a simple summary of analyzed results."""
-        # Total number of hands
-        hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])
+        # --- Hand Outcomes ---
+        total_hands = sum([self.wins, self.losses, self.pushes, self.insurance_wins])  # Note that insurance losses are not a final outcome of a hand!
+        hand_win_pct = zero_division_pct(self.wins, total_hands)
+        hand_loss_pct = zero_division_pct(self.losses, total_hands)
+        hand_push_pct = zero_division_pct(self.pushes, total_hands)
+        hand_insurance_win_pct = zero_division_pct(self.insurance_wins, total_hands)
 
-        # Winnings
-        avg_gross_winnings = mean(self.final_bankrolls) - self.initial_bankroll
-        avg_pct_winnings = avg_gross_winnings / self.initial_bankroll * 100.0
+        # --- Blackjacks ---
+        total_blackjacks = self.gambler_blackjacks + self.dealer_blackjacks
+        bj_gambler_pct = zero_division_pct(self.gambler_blackjacks, total_blackjacks)
+        bj_dealer_pct = zero_division_pct(self.dealer_blackjacks, total_blackjacks)
 
-        # Metric percentages
-        win_pct = self.wins / hands * 100.0
-        loss_pct = self.losses / hands * 100.0
-        push_pct = self.pushes / hands * 100.0
-        insurance_win_pct = self.insurance_wins / hands * 100.0
+        # --- Insurance ---
+        total_insurance = self.insurance_wins + self.insurance_losses
+        ins_win_pct = zero_division_pct(self.insurance_wins, total_insurance)
+        ins_loss_pct = zero_division_pct(self.insurance_losses, total_insurance)
+
+        # --- Bankroll ---
+        winnings_gross_avg = mean(self.final_bankrolls) - self.initial_bankroll
+        winnings_pct_avg = zero_division_pct(winnings_gross_avg, self.initial_bankroll)
 
         # Return the formatted summary string
         print(dedent(f"""\
-            Hands: {hands}
+            --- Hand Outcomes ---
             
-            Wins: {self.wins} ({pct_format(win_pct)})
-            Losses: {self.losses} ({pct_format(loss_pct)})
-            Pushes: {self.pushes} ({pct_format(push_pct)})
-            Insurance Wins: {self.insurance_wins} ({pct_format(insurance_win_pct)})
+            Total Hands: {total_hands}
             
-            Player Blackjacks: {self.gambler_blackjacks}
-            Dealer Blackjacks: {self.dealer_blackjacks}
+            Wins: {self.wins} ({pct_format(hand_win_pct)})
+            Losses: {self.losses} ({pct_format(hand_loss_pct)})
+            Pushes: {self.pushes} ({pct_format(hand_push_pct)})
+            Insurance Wins: {self.insurance_wins} ({pct_format(hand_insurance_win_pct)})
+
+            --- Blackjacks ---
+
+            Total Blackjacks: {total_blackjacks}
+
+            Player Blackjacks: {self.gambler_blackjacks} ({pct_format(bj_gambler_pct)})
+            Dealer Blackjacks: {self.dealer_blackjacks} ({pct_format(bj_dealer_pct)})
+
+            --- Insurance ---
+            
+            Total Bets: {total_insurance}
+            
+            Wins: {self.insurance_wins} ({pct_format(ins_win_pct)}) 
+            Losses: {self.insurance_losses} ({pct_format(ins_loss_pct)})
+
+            --- Bankroll ---
+            
+            Avg Winnings: {money_format(winnings_gross_avg)} ({pct_format(winnings_pct_avg)})
 
             Max Bankroll: {money_format(max(self.final_bankrolls))}
             Min Bankroll: {money_format(min(self.final_bankrolls))}
             Avg Bankroll: {money_format(mean(self.final_bankrolls))}
-
-            Avg Winnings: {money_format(avg_gross_winnings)} ({pct_format(avg_pct_winnings)})
             """)
         )
 

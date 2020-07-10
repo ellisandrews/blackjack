@@ -207,6 +207,7 @@ class GameController:
                         self.set_hand_outcome(gambler_hand, 'Insurance Win')
                         self.add_activity('Dealer has blackjack.', f"{self.gambler.name}'s insurnace wager wins 2:1 (hand wager loses).")
                     else:
+                        gambler_hand.lost_insurance = True
                         self.add_activity('Dealer does not have blackjack.', f"{self.gambler.name}'s insurance wager loses.")
 
                 # If the gambler does not (or cannot) place an insurance bet, they lose if the dealer has blackjack. Otherwise, hand continues.

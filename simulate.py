@@ -10,10 +10,12 @@ from blackjack.configuration import get_simulation_configuration
 from blackjack.display_utils import clear, header
 from blackjack.game_setup import setup_game
 from blackjack.strategies.default_static_strategy import DefaultStaticStrategy
+from blackjack.strategies.insurance_static_strategy import InsuranceStaticStrategy
 
 
 STRATEGY_MAP = {
-    'default': DefaultStaticStrategy
+    'default': DefaultStaticStrategy,
+    'insurance': InsuranceStaticStrategy
 }
 
 

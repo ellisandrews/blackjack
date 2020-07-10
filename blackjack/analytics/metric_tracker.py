@@ -7,6 +7,7 @@ class MetricTracker:
         self.losses = 0
         self.pushes = 0
         self.insurance_wins = 0
+        self.insurance_losses = 0
         self.gambler_blackjacks = 0
         self.dealer_blackjacks = 0
         
@@ -25,6 +26,8 @@ class MetricTracker:
             self.pushes += 1
         elif metric == 'insurance wins':
             self.insurance_wins += 1
+        elif metric == 'insurance losses':
+            self.insurance_losses += 1
         elif metric == 'gambler blackjacks':
             self.gambler_blackjacks += 1
         elif metric == 'dealer blackjacks':
@@ -50,6 +53,10 @@ class MetricTracker:
         else:
             raise ValueError(f"Unsupported hand outcome: {hand.outcome}")
 
+        # Insurance Losses (side bet, separate from 'Outcomes')
+        if hand.lost_insurance:
+            self._increment_metric('insurance losses')
+
     def process_dealer_hand(self, hand):
         """Track metrics for a played DealerHand."""
         if hand.status == 'Blackjack':
@@ -66,6 +73,7 @@ class MetricTracker:
             'losses': self.losses,
             'pushes': self.pushes,
             'insurance_wins': self.insurance_wins,
+            'insurance_losses': self.insurance_losses,
             'gambler_blackjacks': self.gambler_blackjacks,
             'dealer_blackjacks': self.dealer_blackjacks,
             'bankroll_progression': self.bankroll_progression

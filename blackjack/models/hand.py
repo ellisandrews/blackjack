@@ -92,25 +92,35 @@ class Hand:
 
 class GamblerHand(Hand):
 
-    def __init__(self, cards=None, status='Pending', wager=0, insurance=0, hand_number=1, outcome=None):
+    def __init__(self, cards=None, status='Pending', wager=0, insurance=0, hand_number=1):
         super().__init__(cards, status)
+        # Attributes
         self.wager = wager
         self.insurance = insurance
         self.hand_number = hand_number
-        self.outcome = outcome
+        
+        # Metadata
+        self.outcome = None
         self.earnings = 0
+        self.lost_insurance = False
 
     def pretty_format(self):
         """Get a string representation of the hand formatted to be printed."""
+        # Display the case where a hand lost it's insurance side bet
+        extra_outcome = ''
+        if self.lost_insurance:
+            extra_outcome += ' (Lost Insurance Bet)'
+        
         lines = [
             f"Hand {self.hand_number}:",
             f"Cards: {self}",
             f"Total: {self.get_total_to_display()}",
             f"Wager: {money_format(self.wager)}",
             f"Status: {self.status}",
-            f"Outcome: {self.outcome}",
+            f"Outcome: {self.outcome}{extra_outcome}",
             f"Net: {money_format(self.earnings - self.wager - self.insurance)}"
         ]
+        
         return '\n\t'.join(lines)
 
     def is_splittable(self):

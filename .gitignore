@@ -105,3 +105,9 @@ ENV/
 
 # VS Code
 .vscode
+
+# YouTube Video
+video/
+
+# Tech Recap
+tech_recap.md

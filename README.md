@@ -1,11 +1,12 @@
 # blackjack
-A functionally complete blackjack simulator written in pure Python.
+A blackjack game simulator written in pure Python.
 
 <br>
 
 <p align="center">
   <img src="./table.jpg" width="400">
 </p>
+
 
 ## Installation
 
@@ -36,7 +37,9 @@ $ pip install -r requirements.txt
 
 ## Game Modes
 
-There are two different game modes that can be run:
+There are two different game modes that can be run; `Interactive` and `Simulation`.
+
+See my [YouTube Demo](https://www.youtube.com/watch?v=aoJmxT8Urp4) for a live look at each.
 
 #### 1. Interactive Mode
 
@@ -52,7 +55,7 @@ The user can pass an optional `--default` flag to use the default game configura
 
 #### 2. Simulation Mode
 
-This mode allows the user to quickly simulate an arbitrary number of configurable games of blackjack. The user specifies a "strategy" to play (more on this later) and then runs it against an automated dealer. At the conclusion of the simulation, some basic analytics and charts are created for the user summarizing the results.
+This mode allows the user to quickly simulate an arbitrary number of configurable games of blackjack. The user specifies a "strategy" to play (see [Strategies](#strategies) ) and then runs it against an automated dealer. At the conclusion of the simulation, some basic analytics and charts are created for the user summarizing the results.
 
 To launch the simulation game mode, run this script:
 
